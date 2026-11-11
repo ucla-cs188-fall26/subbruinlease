@@ -2,15 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Menu, Plus, X } from "lucide-react";
 import { Logo } from "./logo";
 import { isActive, navLinks } from "./nav-links";
-import { ButtonLink } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { cn } from "@/lib/cn";
 
-export function SiteHeader() {
+/**
+ * `account` is the login button / user menu. It's passed in from the root layout so it
+ * can be a server component that reads the session behind a Suspense boundary.
+ */
+export function SiteHeader({ account }: { account: ReactNode }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -36,26 +39,19 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="ml-auto hidden items-center gap-2 md:flex">
-          <ButtonLink href="/login" variant="ghost" size="sm">
-            Log in
-          </ButtonLink>
-          <ButtonLink href="/listings/new" variant="gold" size="sm">
-            <Plus className="size-4" aria-hidden />
-            Post a sublease
-          </ButtonLink>
+        <div className="ml-auto flex items-center gap-1">
+          {account}
+          <button
+            type="button"
+            className="inline-flex size-10 items-center justify-center rounded-full text-bruin-700 hover:bg-bruin-50 md:hidden"
+            aria-expanded={open}
+            aria-controls="mobile-nav"
+            aria-label={open ? "Close menu" : "Open menu"}
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? <X className="size-5" /> : <Menu className="size-5" />}
+          </button>
         </div>
-
-        <button
-          type="button"
-          className="ml-auto inline-flex size-10 items-center justify-center rounded-full text-bruin-700 hover:bg-bruin-50 md:hidden"
-          aria-expanded={open}
-          aria-controls="mobile-nav"
-          aria-label={open ? "Close menu" : "Open menu"}
-          onClick={() => setOpen((v) => !v)}
-        >
-          {open ? <X className="size-5" /> : <Menu className="size-5" />}
-        </button>
       </Container>
 
       {open && (
@@ -76,14 +72,14 @@ export function SiteHeader() {
                 {label}
               </Link>
             ))}
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <ButtonLink href="/login" variant="outline" onClick={() => setOpen(false)}>
-                Log in
-              </ButtonLink>
-              <ButtonLink href="/listings/new" variant="gold" onClick={() => setOpen(false)}>
-                Post
-              </ButtonLink>
-            </div>
+            <Link
+              href="/listings/new"
+              onClick={() => setOpen(false)}
+              className="mt-1 flex items-center gap-3 rounded-2xl bg-gold-100 px-4 py-3 font-bold text-bruin-800 hover:bg-gold-200"
+            >
+              <Plus className="size-5" aria-hidden />
+              Post a sublease
+            </Link>
           </Container>
         </nav>
       )}

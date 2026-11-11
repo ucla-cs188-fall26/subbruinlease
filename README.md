@@ -60,6 +60,21 @@ returns an implementation of the `DataStore` interface:
 
 Fake accounts: `demo@ucla.edu` (regular student with a few listings) and `admin@ucla.edu`.
 
+## Sign-in
+
+Students sign in with a UCLA email (`@ucla.edu` or `@g.ucla.edu`) and a 6-digit code. There are
+no passwords.
+
+- **Mock mode** (`DATA_SOURCE=mock`): codes aren't emailed yet. They're printed in the
+  terminal running `npm run dev` and shown on the code screen. The login page also has
+  one-click "Demo Bruin" and "Admin" buttons.
+- Sessions are signed cookies (`src/lib/auth/session.ts`). Set `AUTH_SECRET` in production.
+- `src/proxy.ts` sends signed-out visitors from private pages to `/login`. Every private page
+  and server action also checks with `requireUser()` / `requireAdmin()` from
+  `src/lib/auth/current-user.ts`.
+- Anything that reads the signed-in user must be inside a `<Suspense>` boundary (a Next.js
+  16 Cache Components rule).
+
 ## Theme
 
 | Token          | Value     | Use                         |
