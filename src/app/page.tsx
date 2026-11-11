@@ -3,6 +3,28 @@ import { Button, ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Container } from "@/components/ui/container";
 import { Badge } from "@/components/ui/badge";
+import { ListingRow } from "@/components/listings/listing-row";
+import { getDataStore } from "@/lib/data";
+
+async function LatestListings() {
+  const listings = (await getDataStore().listings.list()).slice(0, 6);
+
+  if (listings.length === 0) {
+    return (
+      <Card className="mt-6 border-dashed p-10 text-center text-muted">
+        No subleases yet. Be the first to post one!
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="mt-6 divide-y divide-line/70 overflow-hidden">
+      {listings.map((listing) => (
+        <ListingRow key={listing.id} listing={listing} />
+      ))}
+    </Card>
+  );
+}
 
 const steps = [
   {
@@ -102,9 +124,7 @@ export default function HomePage() {
           <h2 id="latest" className="text-2xl font-semibold sm:text-3xl">
             Latest subleases
           </h2>
-          <Card className="mt-6 border-dashed p-10 text-center text-muted">
-            Listings will show up here soon.
-          </Card>
+          <LatestListings />
         </Container>
       </section>
     </>
