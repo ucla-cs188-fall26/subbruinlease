@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+/*
+ * subBruinLease theme
+ * Colors are sampled from the logo: Bruin blue, Bruin gold, and a warm cream.
+ * Use them in Tailwind as e.g. `bg-bruin-600`, `text-gold-400`, `bg-cream`.
+ */
+@theme {
+  --color-cream: #fcf9f2;
+  --color-cream-dark: #f5efe2;
+
+  --color-bruin-50: #eef3fa;
+  --color-bruin-100: #d9e4f3;
+  --color-bruin-200: #b4c9e7;
+  --color-bruin-300: #86a7d6;
+  --color-bruin-400: #5884c2;
+  --color-bruin-500: #3d70b5;
+  --color-bruin-600: #3166ab; /* logo blue */
+  --color-bruin-700: #28538c;
+  --color-bruin-800: #21436f;
+  --color-bruin-900: #1a3455;
+
+  --color-gold-50: #fef8ea;
+  --color-gold-100: #fdeec9;
+  --color-gold-200: #fbdd94;
+  --color-gold-300: #f8cb63;
+  --color-gold-400: #f5ba3b; /* logo gold */
+  --color-gold-500: #e3a222;
+  --color-gold-600: #c08218;
+
+  --color-ink: #1f2a3a;
+  --color-muted: #5f6b7c;
+  --color-line: #e7e1d4;
+
+  --font-display: var(--font-fredoka), ui-rounded, system-ui, sans-serif;
+  --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-card: 1.25rem;
+  --shadow-soft: 0 1px 2px rgb(31 42 58 / 0.04), 0 4px 16px rgb(31 42 58 / 0.06);
+  --shadow-lift: 0 2px 4px rgb(31 42 58 / 0.06), 0 12px 28px rgb(31 42 58 / 0.1);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    @apply bg-cream font-sans text-ink;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display text-bruin-700;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-bruin-500;
+  }
+}
