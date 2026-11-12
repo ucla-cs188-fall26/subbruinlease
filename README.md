@@ -27,6 +27,7 @@ Open http://localhost:3000.
 | `npm run build`     | Production build          |
 | `npm run lint`      | ESLint                    |
 | `npm run typecheck` | TypeScript, no emit       |
+| `npm test`          | Unit tests (Vitest)       |
 
 ## Project structure
 
@@ -42,6 +43,7 @@ src/
     data/              data-access layer: getDataStore()
       store.ts         the DataStore interface
       mock/            fake in-memory data (seed.ts) + implementation
+    search.ts          Explore filters: date matching, URL params, sorting
     format.ts          money/date formatting
     labels.ts          human-readable labels for enums
 docs/data-model.md     tables + access rules for the database
@@ -59,6 +61,19 @@ returns an implementation of the `DataStore` interface:
   tables the database needs.
 
 Fake accounts: `demo@ucla.edu` (regular student with a few listings) and `admin@ucla.edu`.
+
+## Search & filters
+
+The Explore page (`/`) keeps every filter in the URL, for example
+`/?from=2027-06-15&to=2027-08-15&room=private&maxRent=1500`, so searches can be shared and the
+Back button works. The rules live in `src/lib/search.ts` and are covered by
+`src/lib/search.test.ts`:
+
+- **Dates:** a listing matches only if your whole stay fits inside its availability window.
+  Listings marked "flexible dates" get 7 days of slack on each end.
+- **Text:** every word must appear in the title, description, neighborhood or location.
+- Rent is a maximum and includes the limit. Room type, neighborhood and "furnished only" are
+  exact matches.
 
 ## Sign-in
 

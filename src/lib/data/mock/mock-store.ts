@@ -10,6 +10,7 @@ import type {
   PublicProfile,
   Report,
 } from "@/lib/types";
+import { compareListings, matchesFilters } from "@/lib/search";
 import { NotFoundError, type DataStore, type ListingQuery } from "../store";
 import { seed } from "./seed";
 
@@ -116,6 +117,12 @@ export function createMockStore(): DataStore {
           .filter((l) => !query.ownerId || l.ownerId === query.ownerId)
           .filter((l) => !query.ids || query.ids.includes(l.id))
           .sort(newestFirst)
+          .map(withOwner);
+      },
+      async search(filters) {
+        return db.listings
+          .filter((l) => l.status === "published" && matchesFilters(l, filters))
+          .sort(compareListings(filters.sort))
           .map(withOwner);
       },
       async get(id) {

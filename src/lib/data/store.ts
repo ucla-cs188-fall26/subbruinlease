@@ -13,6 +13,7 @@ import type {
   ReportReason,
   ReportStatus,
 } from "@/lib/types";
+import type { ListingFilters } from "@/lib/search";
 
 /**
  * The one interface the app uses to read and write data.
@@ -55,6 +56,8 @@ export interface ListingQuery {
 export interface ListingRepo {
   /** Newest first (by publishedAt, then createdAt). */
   list(query?: ListingQuery): Promise<ListingWithOwner[]>;
+  /** Explore page search. Published listings only. Rules live in src/lib/search.ts. */
+  search(filters: ListingFilters): Promise<ListingWithOwner[]>;
   get(id: ID): Promise<ListingWithOwner | null>;
   create(ownerId: ID, input: ListingInput, status: "draft" | "published"): Promise<Listing>;
   update(id: ID, input: Partial<ListingInput>): Promise<Listing>;

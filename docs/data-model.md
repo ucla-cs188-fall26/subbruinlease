@@ -62,6 +62,11 @@ One row per user. `id` matches `auth.users.id` from Supabase Auth.
 | `updated_at`         | timestamptz             |                                                             |
 | `published_at`       | timestamptz, null       | set the first time it's published                           |
 
+Search (`DataStore.listings.search`) has to follow the rules in `src/lib/search.ts`. In SQL,
+the date rule is roughly
+`available_from - slack <= :from AND available_to + slack >= :to`, where
+`slack = 7 days if flexible_dates else 0`.
+
 Indexes worth having: `(status, published_at desc)`, `(owner_id)`, `(available_from, available_to)`, `(rent)`.
 
 ### `listing_images`
