@@ -19,6 +19,7 @@ import {
   KeyFacts,
   LeaseSection,
   LocationSection,
+  JustPosted,
   PriceCard,
   SafetyCard,
   StatusNotice,
@@ -43,19 +44,22 @@ export async function generateMetadata({ params }: PageProps<"/listings/[id]">):
   };
 }
 
-export default function ListingPage({ params }: PageProps<"/listings/[id]">) {
+export default function ListingPage({ params, searchParams }: PageProps<"/listings/[id]">) {
   return (
     <Container className="py-6 sm:py-8">
       <BackToExplore />
       <Suspense fallback={<ListingSkeleton />}>
-        <ListingContent params={params} />
+        <ListingContent params={params} searchParams={searchParams} />
       </Suspense>
     </Container>
   );
 }
 
-async function ListingContent({ params }: { params: PageProps<"/listings/[id]">["params"] }) {
-  const { id } = await params;
+async function ListingContent({
+  params,
+  searchParams,
+}: Pick<PageProps<"/listings/[id]">, "params" | "searchParams">) {
+  const [{ id }, query] = await Promise.all([params, searchParams]);
   const store = getDataStore();
   const [listing, user] = await Promise.all([store.listings.get(id), getCurrentUser()]);
   if (!listing || !canViewListing(listing, user)) notFound();
@@ -66,6 +70,7 @@ async function ListingContent({ params }: { params: PageProps<"/listings/[id]">[
 
   return (
     <article className="mt-4">
+      {viewerIsOwner && <JustPosted posted={query.posted === "1"} saved={query.saved === "1"} />}
       <StatusNotice listing={listing} viewer={user} />
 
       <header className="mb-5">

@@ -138,5 +138,16 @@ Suspended users shouldn't be able to insert anything.
 ## Storage
 
 - Bucket `listing-images`, publicly readable. Only the listing owner can write, under the path
-  `{owner_id}/{listing_id}/{filename}`.
-- Max 5 MB per file. JPEG, PNG and WebP only.
+  `{owner_id}/{filename}`.
+- The app re-encodes every photo before storing it: WebP, at most 2000px on the long side,
+  with metadata (including GPS location) removed. Uploads to the server are capped at 4 MB.
+  See `src/lib/images.ts`.
+- In the code, storage sits behind the `ImageStorage` interface in `src/lib/storage/`. Locally
+  photos are written to `.data/uploads/` and served from `/uploads/{owner_id}/{file}.webp`.
+  A Supabase version only needs to implement `save()` and return the bucket's public URL.
+
+## Limits the app enforces
+
+- At most 8 photos per listing, and at least 1 to publish.
+- At most 5 open listings (draft, published, or unavailable) per student.
+- The `location_hint` can't contain a street number or unit number.

@@ -88,6 +88,18 @@ a listing is decided in `src/lib/listings.ts`:
 Everyone else gets a "This listing isn't available" page, and link previews never show a
 private listing's title.
 
+## Posting a listing
+
+`/listings/new` is a five-part form (basics, dates and price, the space, photos, sublease
+permission). Students can **save a draft** or **publish**. Validation rules live in
+`src/lib/listing-schema.ts` and run on the server, so they can't be skipped.
+
+Photos upload one at a time to `POST /api/uploads` as soon as they're picked. The browser
+shrinks big phone photos first, then the server checks that the file really is an image and
+re-encodes it, which strips location data. Locally, photos are saved in `.data/uploads/`
+(ignored by git) and disappear from listings when the server restarts, like the rest of the
+fake data.
+
 ## Sign-in
 
 Students sign in with a UCLA email (`@ucla.edu` or `@g.ucla.edu`) and a 6-digit code. There are

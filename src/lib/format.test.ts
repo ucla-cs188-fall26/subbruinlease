@@ -6,6 +6,7 @@ import {
   formatMoney,
   formatRent,
   formatStayLength,
+  todayInLA,
 } from "./format";
 
 describe("format", () => {
@@ -37,5 +38,11 @@ describe("format", () => {
     expect(formatStayLength("2027-06-01", "2027-06-22")).toBe("3 weeks");
     expect(formatStayLength("2027-06-15", "2027-09-10")).toBe("about 3 months");
     expect(formatStayLength("2027-01-01", "2027-12-31")).toBe("about 12 months");
+  });
+
+  it("uses the Los Angeles calendar day for today", () => {
+    // 7am UTC on Nov 12 is still Nov 11 in LA.
+    expect(todayInLA(new Date("2026-11-12T07:00:00Z"))).toBe("2026-11-11");
+    expect(todayInLA(new Date("2026-11-12T09:00:00Z"))).toBe("2026-11-12");
   });
 });

@@ -13,6 +13,7 @@ import {
   Lock,
   MapPin,
   MessageCircle,
+  PartyPopper,
   PawPrint,
   Pencil,
   ShieldAlert,
@@ -49,6 +50,29 @@ function SectionTitle({ id, children }: { id: string; children: React.ReactNode 
 }
 
 /* ------------------------------------------------------------------ */
+
+/** Shown to the owner right after creating a listing. */
+export function JustPosted({ posted, saved }: { posted: boolean; saved: boolean }) {
+  if (!posted && !saved) return null;
+  return (
+    <Alert tone="success" className="mb-5 flex items-start gap-2">
+      <PartyPopper className="mt-0.5 size-4 shrink-0" aria-hidden />
+      <span>
+        {posted ? (
+          <>
+            <strong>Your listing is live!</strong> It now shows up on Explore. Share the link with
+            friends or in your group chats to get more eyes on it.
+          </>
+        ) : (
+          <>
+            <strong>Draft saved.</strong> Only you can see it. You can come back and publish it from
+            My Listings.
+          </>
+        )}
+      </span>
+    </Alert>
+  );
+}
 
 export function StatusNotice({ listing, viewer }: Props & { viewer: CurrentUser | null }) {
   const mine = isOwner(listing, viewer);

@@ -78,3 +78,9 @@ export function formatStayLength(from: DateString, to: DateString) {
   const months = Math.round(days / 30.44);
   return `about ${months} month${months === 1 ? "" : "s"}`;
 }
+
+/** Today's date at UCLA (Los Angeles time) as "YYYY-MM-DD". */
+export function todayInLA(now = new Date()): DateString {
+  // en-CA formats as YYYY-MM-DD.
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles" }).format(now);
+}
