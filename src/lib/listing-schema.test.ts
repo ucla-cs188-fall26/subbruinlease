@@ -122,3 +122,11 @@ describe("isAllowedPhotoUrl", () => {
     expect(isAllowedPhotoUrl("https://images.unsplash.com/photo-1", "u_1", ["https://images.unsplash.com/photo-1"])).toBe(true);
   });
 });
+
+describe("listingSchema when editing a published listing", () => {
+  it("keeps the photo rule but doesn't ask for the checkbox again", () => {
+    const schema = listingSchema({ intent: "publish", today: TODAY, requireConfirm: false });
+    expect(schema.safeParse(form({ confirm: "" })).success).toBe(true);
+    expect(schema.safeParse(form({ confirm: "", photos: "[]" })).success).toBe(false);
+  });
+});

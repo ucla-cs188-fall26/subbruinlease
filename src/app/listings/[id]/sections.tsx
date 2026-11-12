@@ -35,7 +35,8 @@ import type { CurrentUser } from "@/lib/auth/current-user";
 import { cn } from "@/lib/cn";
 import { formatDate, formatMoney, formatStayLength } from "@/lib/format";
 import { amenityLabels, leasePermissionLabels } from "@/lib/labels";
-import { canContactOwner, isOwner } from "@/lib/listings";
+import { canContactOwner, canEditListing, isOwner, ownerActions } from "@/lib/listings";
+import { StatusActions } from "@/components/listings/status-actions";
 import { FLEX_DAYS } from "@/lib/search";
 import type { Amenity, LeasePermission, ListingWithOwner, PublicProfile } from "@/lib/types";
 
@@ -52,8 +53,8 @@ function SectionTitle({ id, children }: { id: string; children: React.ReactNode 
 /* ------------------------------------------------------------------ */
 
 /** Shown to the owner right after creating a listing. */
-export function JustPosted({ posted, saved }: { posted: boolean; saved: boolean }) {
-  if (!posted && !saved) return null;
+export function JustPosted({ posted, saved, updated }: { posted: boolean; saved: boolean; updated: boolean }) {
+  if (!posted && !saved && !updated) return null;
   return (
     <Alert tone="success" className="mb-5 flex items-start gap-2">
       <PartyPopper className="mt-0.5 size-4 shrink-0" aria-hidden />
@@ -63,10 +64,14 @@ export function JustPosted({ posted, saved }: { posted: boolean; saved: boolean 
             <strong>Your listing is live!</strong> It now shows up on Explore. Share the link with
             friends or in your group chats to get more eyes on it.
           </>
+        ) : updated ? (
+          <>
+            <strong>Changes saved.</strong> Your listing is up to date.
+          </>
         ) : (
           <>
-            <strong>Draft saved.</strong> Only you can see it. You can come back and publish it from
-            My Listings.
+            <strong>Draft saved.</strong> Only you can see it. Publish it below or from My
+            Listings when it’s ready.
           </>
         )}
       </span>
@@ -356,12 +361,23 @@ function ContactArea({
 }: Props & { viewer: CurrentUser | null; mine: boolean }) {
   if (mine) {
     return (
-      <div className="space-y-2">
+      <div className="space-y-3">
         <p className="text-center text-sm font-semibold text-muted">This is your listing</p>
-        <ButtonLink href={`/listings/${listing.id}/edit`} variant="outline" className="w-full">
-          <Pencil className="size-4" aria-hidden />
-          Edit listing
-        </ButtonLink>
+        {canEditListing(listing) && (
+          <ButtonLink href={`/listings/${listing.id}/edit`} variant="outline" className="w-full">
+            <Pencil className="size-4" aria-hidden />
+            Edit listing
+          </ButtonLink>
+        )}
+        <StatusActions
+          listingId={listing.id}
+          status={listing.status}
+          actions={ownerActions(listing.status)}
+          className="[&>div]:justify-center"
+        />
+        <Link href="/dashboard" className="block text-center text-sm font-bold text-bruin-600 hover:underline">
+          Manage all my listings
+        </Link>
       </div>
     );
   }

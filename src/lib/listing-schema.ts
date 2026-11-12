@@ -107,7 +107,16 @@ export function readListingForm(formData: FormData): ListingFormRaw {
  * requirements so students can save and come back; everything else is checked either way.
  * `today` is "YYYY-MM-DD" (passed in so tests are deterministic).
  */
-export function listingSchema({ intent, today }: { intent: ListingIntent; today: string }) {
+export function listingSchema({
+  intent,
+  today,
+  requireConfirm = intent === "publish",
+}: {
+  intent: ListingIntent;
+  today: string;
+  /** Edits to an already-published listing keep publish rules but skip the checkbox. */
+  requireConfirm?: boolean;
+}) {
   const publishing = intent === "publish";
   const latest = addDays(today, 365 * 2);
 
@@ -156,7 +165,7 @@ export function listingSchema({ intent, today }: { intent: ListingIntent; today:
         .max(MAX_PHOTOS, `Use at most ${MAX_PHOTOS} photos.`)
         .refine((p) => !publishing || p.length > 0, "Add at least one photo before publishing."),
       confirm: checkbox.refine(
-        (v) => !publishing || v,
+        (v) => !requireConfirm || v,
         "Please confirm before publishing.",
       ),
     })
@@ -175,8 +184,8 @@ export function listingSchema({ intent, today }: { intent: ListingIntent; today:
     })
     .transform(({ photos, utilitiesEstimate, ...fields }) => {
       // `confirm` is only a checkbox on the form; it isn't stored.
-      const rest = { ...fields, confirm: undefined };
-      delete rest.confirm;
+      const { confirm, ...rest } = fields;
+      void confirm;
       const input: ListingInput = {
         ...rest,
         utilitiesEstimate: rest.utilitiesIncluded ? null : utilitiesEstimate,

@@ -438,7 +438,8 @@ const listingSeeds: ListingSeed[] = [
     ownerId: DEMO_USER_ID,
     status: "draft",
     title: "Room on Glenrock (draft)",
-    description: "Still writing this one up.",
+    description:
+      "Still writing this one up. Private room in a two-bedroom on Glenrock, a short walk to campus.",
     neighborhood: "North Village",
     locationHint: "Glenrock Ave",
     housingType: "apartment",

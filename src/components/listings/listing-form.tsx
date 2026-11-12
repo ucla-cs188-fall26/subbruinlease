@@ -16,8 +16,11 @@ export type ListingFormValues = Partial<ListingInput>;
 type Props = {
   action: (prev: FormState, formData: FormData) => Promise<FormState>;
   initial?: ListingFormValues;
-  /** "create" shows Save draft + Publish. "edit" shows a single Save button. */
-  mode?: "create" | "edit";
+  /**
+   * "create" and "edit-draft" show Save draft + Publish (with the confirmation checkbox).
+   * "edit" (a live or unavailable listing) shows a single Save button.
+   */
+  mode?: "create" | "edit-draft" | "edit";
   /** Today in LA, "YYYY-MM-DD", for date input minimums. */
   today: string;
 };
@@ -48,6 +51,7 @@ export function ListingForm({ action, initial = {}, mode = "create", today }: Pr
   });
   const [from, setFrom] = useState(initial.availableFrom ?? "");
   const formRef = useRef<HTMLFormElement>(null);
+  const canPublish = mode !== "edit";
   // Fields edited since the last submit. Their old errors are hidden so fixes show right away.
   const [edited, setEdited] = useState<{ state: FormState; names: Set<string> }>({ state, names: new Set() });
   const editedNames = edited.state === state ? edited.names : new Set<string>();
@@ -371,7 +375,7 @@ export function ListingForm({ action, initial = {}, mode = "create", today }: Pr
           <ErrorText>{err("leasePermission")}</ErrorText>
         </fieldset>
 
-        {mode === "create" && (
+        {canPublish && (
           <div data-error={err("confirm") ? true : undefined}>
             <label className="flex cursor-pointer items-start gap-3 rounded-2xl bg-cream-dark/60 p-4">
               <input
@@ -397,7 +401,7 @@ export function ListingForm({ action, initial = {}, mode = "create", today }: Pr
             Waiting for photos to finish uploading…
           </p>
         )}
-        {mode === "create" ? (
+        {canPublish ? (
           <>
             <Button type="submit" name="intent" value="draft" variant="outline" disabled={pending || uploading}>
               {pending && submitter === "draft" ? "Saving…" : "Save as draft"}

@@ -70,7 +70,9 @@ async function ListingContent({
 
   return (
     <article className="mt-4">
-      {viewerIsOwner && <JustPosted posted={query.posted === "1"} saved={query.saved === "1"} />}
+      {viewerIsOwner && (
+        <JustPosted posted={query.posted === "1"} saved={query.saved === "1"} updated={query.updated === "1"} />
+      )}
       <StatusNotice listing={listing} viewer={user} />
 
       <header className="mb-5">

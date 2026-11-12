@@ -43,3 +43,57 @@ export function pickSimilar<T extends Listing>(listing: Listing, candidates: T[]
     .slice(0, count)
     .map(({ c }) => c);
 }
+
+/* ------------------------------------------------------------------ */
+/* Status changes the owner can make                                  */
+/* ------------------------------------------------------------------ */
+
+export type StatusAction = "publish" | "mark_unavailable" | "mark_available" | "close";
+
+const ACTION_RESULT: Record<StatusAction, ListingStatus> = {
+  publish: "published",
+  mark_unavailable: "unavailable",
+  mark_available: "published",
+  close: "closed",
+};
+
+/**
+ *   draft ──publish──▶ published ◀──mark_available / mark_unavailable──▶ unavailable
+ *     │                    │                                                │
+ *     └────────────────────┴──────────────────close─────────────────────────┘──▶ closed
+ *
+ * Closed is final (post a new listing instead). Hidden listings are managed by admins only.
+ */
+const OWNER_ACTIONS: Record<ListingStatus, StatusAction[]> = {
+  draft: ["publish", "close"],
+  published: ["mark_unavailable", "close"],
+  unavailable: ["mark_available", "close"],
+  closed: [],
+  hidden: [],
+};
+
+export function ownerActions(status: ListingStatus): StatusAction[] {
+  return OWNER_ACTIONS[status];
+}
+
+export function statusAfter(action: StatusAction): ListingStatus {
+  return ACTION_RESULT[action];
+}
+
+/** Owners can edit anything that isn't closed or hidden by moderators. */
+export function canEditListing(listing: Pick<Listing, "status">) {
+  return listing.status !== "closed" && listing.status !== "hidden";
+}
+
+/**
+ * Why a listing can't go live right now, or null if it can. Drafts are saved without
+ * photos, and dates can pass while something sits in drafts or stays unavailable.
+ */
+export function publishProblem(
+  listing: Pick<Listing, "images" | "availableTo">,
+  today: string,
+): string | null {
+  if (listing.images.length === 0) return "Add at least one photo before publishing.";
+  if (listing.availableTo <= today) return "The move-out date has passed. Update the dates first.";
+  return null;
+}

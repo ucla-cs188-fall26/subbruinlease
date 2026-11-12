@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { canContactOwner, canViewListing, pickSimilar, type Viewer } from "./listings";
+import {
+  canContactOwner,
+  canEditListing,
+  canViewListing,
+  ownerActions,
+  pickSimilar,
+  publishProblem,
+  statusAfter,
+  type Viewer,
+} from "./listings";
 import type { Listing, ListingStatus } from "./types";
 
 const owner: Viewer = { id: "u_owner", role: "student" };
@@ -49,5 +58,30 @@ describe("pickSimilar", () => {
       make("draft", "Palms", 1000, "draft"),
     ]);
     expect(result.map((l) => l.id)).toEqual(["same-close", "same-pricey", "far-cheap"]);
+  });
+});
+
+describe("status changes", () => {
+  it("only offers sensible next steps", () => {
+    expect(ownerActions("draft")).toEqual(["publish", "close"]);
+    expect(ownerActions("published")).toEqual(["mark_unavailable", "close"]);
+    expect(ownerActions("unavailable")).toEqual(["mark_available", "close"]);
+    expect(ownerActions("closed")).toEqual([]);
+    expect(ownerActions("hidden")).toEqual([]);
+    expect(statusAfter("mark_available")).toBe("published");
+  });
+
+  it("blocks editing closed and hidden listings", () => {
+    expect(canEditListing({ status: "draft" })).toBe(true);
+    expect(canEditListing({ status: "unavailable" })).toBe(true);
+    expect(canEditListing({ status: "closed" })).toBe(false);
+    expect(canEditListing({ status: "hidden" })).toBe(false);
+  });
+
+  it("needs a photo and future dates to publish", () => {
+    const photo = [{ id: "i", listingId: "l", url: "/x", alt: "", position: 0 }];
+    expect(publishProblem({ images: [], availableTo: "2027-09-01" }, "2026-11-12")).toMatch(/photo/);
+    expect(publishProblem({ images: photo, availableTo: "2026-11-12" }, "2026-11-12")).toMatch(/passed/);
+    expect(publishProblem({ images: photo, availableTo: "2027-09-01" }, "2026-11-12")).toBeNull();
   });
 });

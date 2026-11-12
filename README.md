@@ -100,6 +100,23 @@ re-encodes it, which strips location data. Locally, photos are saved in `.data/u
 (ignored by git) and disappear from listings when the server restarts, like the rest of the
 fake data.
 
+## Managing listings
+
+`/dashboard` (My Listings) shows a student's listings with status tabs. From there, or from
+the listing page itself, owners can:
+
+| From        | Actions                                   |
+| ----------- | ----------------------------------------- |
+| Draft       | Publish, Discard                          |
+| Live        | Mark unavailable, Close                   |
+| Unavailable | Mark available, Close                     |
+| Closed      | none (post a new listing instead)         |
+| Hidden      | none (set by moderators)                  |
+
+These rules live in `src/lib/listings.ts`. Publishing needs at least one photo and a
+move-out date in the future. `/listings/[id]/edit` reuses the posting form. Edits to a live
+listing go up right away and have to stay complete; drafts can stay unfinished.
+
 ## Sign-in
 
 Students sign in with a UCLA email (`@ucla.edu` or `@g.ucla.edu`) and a 6-digit code. There are
