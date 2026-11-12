@@ -75,6 +75,19 @@ Back button works. The rules live in `src/lib/search.ts` and are covered by
 - Rent is a maximum and includes the limit. Room type, neighborhood and "furnished only" are
   exact matches.
 
+## Listing pages
+
+`/listings/[id]` shows photos, details, price, the poster, and similar places. Who can open
+a listing is decided in `src/lib/listings.ts`:
+
+| Status                    | Who can open it        |
+| ------------------------- | ---------------------- |
+| published, unavailable    | anyone with the link   |
+| draft, closed, hidden     | the owner and admins   |
+
+Everyone else gets a "This listing isn't available" page, and link previews never show a
+private listing's title.
+
 ## Sign-in
 
 Students sign in with a UCLA email (`@ucla.edu` or `@g.ucla.edu`) and a 6-digit code. There are

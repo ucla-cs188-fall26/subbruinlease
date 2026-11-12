@@ -66,3 +66,15 @@ export function formatPostedDate(timestamp: string, now = new Date()) {
     ...(sameYear ? {} : { year: "numeric" }),
   }).format(d);
 }
+
+/**
+ * Rough, friendly stay length: 12 days → "12 days", 20 days → "3 weeks",
+ * 87 days → "about 3 months".
+ */
+export function formatStayLength(from: DateString, to: DateString) {
+  const days = daysBetween(from, to);
+  if (days < 14) return `${days} day${days === 1 ? "" : "s"}`;
+  if (days < 56) return `${Math.round(days / 7)} weeks`;
+  const months = Math.round(days / 30.44);
+  return `about ${months} month${months === 1 ? "" : "s"}`;
+}

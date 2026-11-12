@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { LayoutGrid, List, Search, SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/field";
+import { rememberExploreSearch } from "@/components/listings/listing-actions";
 import { cn } from "@/lib/cn";
 import {
   countActiveFilters,
@@ -50,6 +51,7 @@ export function ExploreControls({ filters: fromUrl, view, resultCount, children 
   // Back/forward navigation: adopt the URL's filters if they aren't the ones we just pushed.
   useEffect(() => {
     const incoming = filtersToParams(fromUrl, { view: view === "list" ? "list" : null }).toString();
+    rememberExploreSearch(incoming);
     if (incoming !== lastPushed.current) {
       lastPushed.current = incoming;
       setFilters(fromUrl);
