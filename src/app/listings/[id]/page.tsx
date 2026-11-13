@@ -11,6 +11,7 @@ import { SaveButton } from "@/components/listings/save-button";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { getDataStore } from "@/lib/data";
 import { formatPostedDate } from "@/lib/format";
+import { recentInquiryAbout } from "@/lib/inquiries";
 import { housingTypeLabels, roomTypeLabels } from "@/lib/labels";
 import { canSaveListing } from "@/lib/favorites";
 import { canViewListing, isOwner, isPublicListing, pickSimilar } from "@/lib/listings";
@@ -67,10 +68,14 @@ async function ListingContent({
   if (!listing || !canViewListing(listing, user)) notFound();
 
   const viewerIsOwner = isOwner(listing, user);
-  const [allPublished, savedList] = await Promise.all([
+  const [allPublished, savedList, sentList] = await Promise.all([
     listing.status === "published" ? store.listings.list() : [],
     user ? store.favorites.listIds(user.id) : [],
+    user && !viewerIsOwner ? store.inquiries.listSent(user.id) : [],
   ]);
+  // If they messaged about this place recently, show that instead of a fresh form.
+  const recent = recentInquiryAbout(sentList, listing.id);
+  const recentlySentOn = recent ? `on ${formatPostedDate(recent.createdAt)}` : null;
   const similar = listing.status === "published" ? pickSimilar(listing, allPublished) : [];
   const savedIds = new Set(savedList);
   const isSaved = savedIds.has(listing.id);
@@ -132,8 +137,8 @@ async function ListingContent({
           <HostSection owner={listing.owner} isYou={viewerIsOwner} />
         </div>
 
-        <aside className="order-first space-y-4 lg:order-none lg:sticky lg:top-24 lg:self-start" aria-label="Price and contact">
-          <PriceCard listing={listing} viewer={user} />
+        <aside className="order-first space-y-4 lg:order-none lg:self-start lg:[@media(min-height:62rem)]:sticky lg:[@media(min-height:62rem)]:top-24" aria-label="Price and contact">
+          <PriceCard listing={listing} viewer={user} recentlySentOn={recentlySentOn} />
           <SafetyCard />
         </aside>
       </div>

@@ -29,14 +29,16 @@ import Link from "next/link";
 import { Alert } from "@/components/ui/alert";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button, ButtonLink } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { CurrentUser } from "@/lib/auth/current-user";
 import { cn } from "@/lib/cn";
 import { formatDate, formatMoney, formatStayLength } from "@/lib/format";
 import { amenityLabels, leasePermissionLabels } from "@/lib/labels";
 import { canContactOwner, canEditListing, isOwner, ownerActions } from "@/lib/listings";
+import { InquiryForm } from "@/components/listings/inquiry-form";
 import { StatusActions } from "@/components/listings/status-actions";
+import { firstName } from "@/lib/inquiries";
 import { FLEX_DAYS } from "@/lib/search";
 import type { Amenity, LeasePermission, ListingWithOwner, PublicProfile } from "@/lib/types";
 
@@ -306,7 +308,11 @@ export function HostSection({ owner, isYou }: { owner: PublicProfile; isYou: boo
 
 /* ------------------------------------------------------------------ */
 
-export function PriceCard({ listing, viewer }: Props & { viewer: CurrentUser | null }) {
+export function PriceCard({
+  listing,
+  viewer,
+  recentlySentOn = null,
+}: Props & { viewer: CurrentUser | null; recentlySentOn?: string | null }) {
   const mine = isOwner(listing, viewer);
 
   const rows: Array<[string, string]> = [
@@ -348,7 +354,7 @@ export function PriceCard({ listing, viewer }: Props & { viewer: CurrentUser | n
       )}
 
       <div className="mt-5">
-        <ContactArea listing={listing} viewer={viewer} mine={mine} />
+        <ContactArea listing={listing} viewer={viewer} mine={mine} recentlySentOn={recentlySentOn} />
       </div>
     </Card>
   );
@@ -358,7 +364,8 @@ function ContactArea({
   listing,
   viewer,
   mine,
-}: Props & { viewer: CurrentUser | null; mine: boolean }) {
+  recentlySentOn,
+}: Props & { viewer: CurrentUser | null; mine: boolean; recentlySentOn: string | null }) {
   if (mine) {
     return (
       <div className="space-y-3">
@@ -405,15 +412,15 @@ function ContactArea({
     );
   }
 
-  // The message form is added in the inquiries step.
   return (
-    <div className="space-y-2 text-center">
-      <Button className="w-full" disabled>
-        <MessageCircle className="size-4" aria-hidden />
-        Message {listing.owner.displayName.split(" ")[0]}
-      </Button>
-      <p className="text-xs text-muted">Messaging is coming soon.</p>
-    </div>
+    <InquiryForm
+      listingId={listing.id}
+      ownerFirstName={firstName(listing.owner.displayName)}
+      listingFrom={listing.availableFrom}
+      listingTo={listing.availableTo}
+      email={viewer.email}
+      recentlySentOn={recentlySentOn}
+    />
   );
 }
 

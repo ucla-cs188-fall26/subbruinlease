@@ -142,6 +142,22 @@ Saved listings never disappear on their own; students remove them. Only live lis
 be newly saved, never your own, and up to 100 at a time. These rules live in
 `src/lib/favorites.ts` and match the database's `favorites` policies.
 
+## Messaging posters
+
+Signed-in students message a poster from the listing page. The sparkle button in the
+message box fills in a friendly starter message (with a blank to fill in about yourself).
+
+- The message is saved and **emailed to the poster** with Reply-To set to the sender, so
+  the poster replies from their own email. The poster's address is never shown.
+- `/inbox` shows messages received (mark as read, archive, reply by email) and sent.
+- Limits: 20–1,000 characters, one message per listing per day, 5 per hour, 20 per day.
+  Rules live in `src/lib/inquiries.ts`.
+
+**Email setup:** without `RESEND_API_KEY`, emails are printed in the terminal running
+`npm run dev`, so everything works locally with no setup. To send real email, add a
+[Resend](https://resend.com) key and `EMAIL_FROM` (on a domain verified in Resend) to
+`.env.local`. Sending code: `src/lib/email/`.
+
 ## Sign-in
 
 Students sign in with a UCLA email (`@ucla.edu` or `@g.ucla.edu`) and a 6-digit code. There are
