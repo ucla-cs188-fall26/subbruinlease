@@ -6,7 +6,11 @@ import { Container } from "@/components/ui/container";
 import { Badge } from "@/components/ui/badge";
 import { ListingCard, ListingCardSkeleton } from "@/components/listings/listing-card";
 import { ListingRow } from "@/components/listings/listing-row";
+import { SaveButton } from "@/components/listings/save-button";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { getDataStore } from "@/lib/data";
+import { isOwner } from "@/lib/listings";
+import type { ListingWithOwner } from "@/lib/types";
 import { parseFilters, parseView } from "@/lib/search";
 import { ExploreControls } from "./explore-controls";
 
@@ -40,7 +44,20 @@ async function Explore({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
   const filters = parseFilters(params);
   const view = parseView(params);
-  const listings = await getDataStore().listings.search(filters);
+  const store = getDataStore();
+  const [listings, user] = await Promise.all([store.listings.search(filters), getCurrentUser()]);
+  const savedIds = new Set(user ? await store.favorites.listIds(user.id) : []);
+
+  // No save button on your own listings.
+  const saveFor = (listing: ListingWithOwner) =>
+    isOwner(listing, user) ? undefined : (
+      <SaveButton
+        listingId={listing.id}
+        title={listing.title}
+        saved={savedIds.has(listing.id)}
+        signedIn={user !== null}
+      />
+    );
 
   return (
     <ExploreControls filters={filters} view={view} resultCount={listings.length}>
@@ -59,13 +76,13 @@ async function Explore({ searchParams }: { searchParams: SearchParams }) {
       ) : view === "list" ? (
         <Card className="divide-y divide-line/70 overflow-hidden">
           {listings.map((listing) => (
-            <ListingRow key={listing.id} listing={listing} />
+            <ListingRow key={listing.id} listing={listing} action={saveFor(listing)} />
           ))}
         </Card>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {listings.map((listing, i) => (
-            <ListingCard key={listing.id} listing={listing} priority={i < 3} />
+            <ListingCard key={listing.id} listing={listing} priority={i < 3} action={saveFor(listing)} />
           ))}
         </div>
       )}

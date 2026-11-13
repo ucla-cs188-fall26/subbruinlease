@@ -7,10 +7,12 @@ import { Container } from "@/components/ui/container";
 import { ListingCard } from "@/components/listings/listing-card";
 import { PhotoGallery } from "@/components/listings/photo-gallery";
 import { BackToExplore, ShareButton } from "@/components/listings/listing-actions";
+import { SaveButton } from "@/components/listings/save-button";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { getDataStore } from "@/lib/data";
 import { formatPostedDate } from "@/lib/format";
 import { housingTypeLabels, roomTypeLabels } from "@/lib/labels";
+import { canSaveListing } from "@/lib/favorites";
 import { canViewListing, isOwner, isPublicListing, pickSimilar } from "@/lib/listings";
 import {
   AboutSection,
@@ -65,8 +67,15 @@ async function ListingContent({
   if (!listing || !canViewListing(listing, user)) notFound();
 
   const viewerIsOwner = isOwner(listing, user);
-  const similar =
-    listing.status === "published" ? pickSimilar(listing, await store.listings.list()) : [];
+  const [allPublished, savedList] = await Promise.all([
+    listing.status === "published" ? store.listings.list() : [],
+    user ? store.favorites.listIds(user.id) : [],
+  ]);
+  const similar = listing.status === "published" ? pickSimilar(listing, allPublished) : [];
+  const savedIds = new Set(savedList);
+  const isSaved = savedIds.has(listing.id);
+  // Show the toggle when it can be saved, or so a saved one (e.g. now unavailable) can be removed.
+  const showSave = !viewerIsOwner && (isSaved || canSaveListing(listing, user));
 
   return (
     <article className="mt-4">
@@ -83,7 +92,18 @@ async function ListingContent({
             {listing.furnished && <Badge tone="neutral">Furnished</Badge>}
             {listing.flexibleDates && <Badge tone="gold">Flexible dates</Badge>}
           </div>
-          <ShareButton title={listing.title} />
+          <div className="flex shrink-0 items-center">
+            {showSave && (
+              <SaveButton
+                listingId={listing.id}
+                title={listing.title}
+                saved={isSaved}
+                signedIn={user !== null}
+                variant="button"
+              />
+            )}
+            <ShareButton title={listing.title} />
+          </div>
         </div>
         <h1 className="text-3xl leading-tight font-semibold sm:text-4xl">{listing.title}</h1>
         <p className="mt-2 flex flex-wrap items-center gap-x-1.5 text-muted">
@@ -125,7 +145,15 @@ async function ListingContent({
           </h2>
           <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {similar.map((l) => (
-              <ListingCard key={l.id} listing={l} />
+              <ListingCard
+                key={l.id}
+                listing={l}
+                action={
+                  isOwner(l, user) ? undefined : (
+                    <SaveButton listingId={l.id} title={l.title} saved={savedIds.has(l.id)} signedIn={user !== null} />
+                  )
+                }
+              />
             ))}
           </div>
         </section>

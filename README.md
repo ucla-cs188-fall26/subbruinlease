@@ -128,6 +128,20 @@ These rules live in `src/lib/listings.ts`. Publishing needs at least one photo a
 move-out date in the future. `/listings/[id]/edit` reuses the posting form. Edits to a live
 listing go up right away and have to stay complete; drafts can stay unfinished.
 
+## Saved listings
+
+Every listing card and listing page has a bookmark button. Signed-out visitors who tap it
+are sent to sign in, then back to the same page. `/saved` lists everything a student saved,
+newest first:
+
+- **Available**: live listings, shown as cards
+- **Not available right now**: the poster paused it. It may come back, so it stays
+- **No longer available**: closed by the poster, or removed by moderators (no details shown)
+
+Saved listings never disappear on their own; students remove them. Only live listings can
+be newly saved, never your own, and up to 100 at a time. These rules live in
+`src/lib/favorites.ts` and match the database's `favorites` policies.
+
 ## Sign-in
 
 Students sign in with a UCLA email (`@ucla.edu` or `@g.ucla.edu`) and a 6-digit code. There are
