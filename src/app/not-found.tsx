@@ -7,7 +7,7 @@ export default function NotFound() {
       <BearHouse className="mb-6 h-28 w-auto" />
       <h1 className="text-3xl font-semibold sm:text-4xl">This room’s not available</h1>
       <p className="mt-3 max-w-md text-muted">
-        The page you’re looking for doesn’t exist, or it hasn’t been built yet.
+        The page you’re looking for doesn’t exist or has moved.
       </p>
       <ButtonLink href="/" className="mt-8">
         Back to Explore

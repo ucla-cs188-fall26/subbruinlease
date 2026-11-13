@@ -26,7 +26,8 @@
   --color-gold-300: #f8cb63;
   --color-gold-400: #f5ba3b; /* logo gold */
   --color-gold-500: #e3a222;
-  --color-gold-600: #c08218;
+  --color-gold-600: #c08218; /* icons and large text only */
+  --color-gold-700: #8a5a0a; /* gold text that needs to be readable */
 
   --color-ink: #1f2a3a;
   --color-muted: #5f6b7c;
@@ -58,5 +59,27 @@
 
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-bruin-500;
+  }
+}
+
+/* Long-form text pages (safety, terms, privacy). */
+@layer components {
+  .prose-sbl {
+    @apply space-y-4 leading-relaxed text-ink/90;
+  }
+  .prose-sbl h2 {
+    @apply pt-6 text-2xl font-semibold;
+  }
+  .prose-sbl h3 {
+    @apply pt-2 text-lg font-semibold;
+  }
+  .prose-sbl ul {
+    @apply list-disc space-y-1.5 pl-6 marker:text-gold-400;
+  }
+  .prose-sbl a {
+    @apply font-bold text-bruin-700 underline decoration-bruin-200 underline-offset-2 hover:decoration-bruin-500;
+  }
+  .prose-sbl strong {
+    @apply text-ink;
   }
 }

@@ -158,6 +158,38 @@ message box fills in a friendly starter message (with a blank to fill in about y
 [Resend](https://resend.com) key and `EMAIL_FROM` (on a domain verified in Resend) to
 `.env.local`. Sending code: `src/lib/email/`.
 
+## Reports & moderation
+
+Any signed-in student can **Report this listing** from a listing page (reason + optional
+details). Reporters stay anonymous to the poster; one open report per listing per person,
+10 per day. Rules live in `src/lib/reports.ts`.
+
+Admins (dev sign-in: **Admin**) get `/admin` and a "Moderator tools" card on listing pages:
+
+| Action          | What happens                                                              |
+| --------------- | ------------------------------------------------------------------------- |
+| Hide listing    | Status becomes `hidden` (gone for everyone but the poster); reports resolved |
+| Dismiss reports | Reports closed, listing stays up                                          |
+| Restore listing | Hidden listing goes live again                                            |
+| Suspend user    | They can't sign in, existing sessions stop working, live listings hidden  |
+| Lift suspension | They can sign in again; hidden listings stay hidden until restored        |
+
+## Pages & polish
+
+`/safety`, `/terms`, and `/privacy` are plain text pages (`src/app/*/page.tsx`). Have the
+terms and privacy text reviewed before launch. Set `NEXT_PUBLIC_SUPPORT_EMAIL` to show a
+contact address on them. Crashes show `src/app/error.tsx` (header and footer stay);
+`global-error.tsx` covers the rare case where the layout itself fails. Pages were checked
+with axe for WCAG AA issues.
+
+## Deploying (Vercel)
+
+The app builds on Vercel as is (`npm run build`). Before a real launch, finish the Supabase
+step: with fake data, changes reset whenever the server restarts and photo uploads are
+saved to local disk, which doesn't persist on Vercel. Set these in the Vercel project:
+`AUTH_SECRET`, `DATA_SOURCE`, the Supabase keys, `RESEND_API_KEY`, `EMAIL_FROM`, and
+`APP_URL` (your site's address, used in email links).
+
 ## Sign-in
 
 Students sign in with a UCLA email (`@ucla.edu` or `@g.ucla.edu`) and a 6-digit code. There are

@@ -119,7 +119,7 @@ function Hero() {
             UCLA students only
           </Badge>
           <h1 className="max-w-2xl text-4xl leading-tight font-semibold sm:text-5xl">
-            Find your next <span className="text-gold-500">Bruin</span> home.
+            Find your next <span className="text-gold-600">Bruin</span> home.
           </h1>
           <p className="mt-3 max-w-xl text-lg text-muted">
             Short-term subleases near campus for summer, study abroad, internships, and everything

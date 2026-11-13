@@ -124,7 +124,7 @@ function DashboardRow({ listing, today }: { listing: ListingWithOwner; today: st
   const editable = canEditListing(listing);
 
   return (
-    <Card className={cn("flex gap-4 p-4 sm:p-5", listing.status === "closed" && "opacity-75")}>
+    <Card className={cn("flex gap-4 p-4 sm:p-5", listing.status === "closed" && "bg-cream/70 [&_img]:opacity-60 [&_img]:grayscale")}>
       <Link
         href={`/listings/${listing.id}`}
         tabIndex={-1}

@@ -94,7 +94,8 @@ export interface ReportRepo {
     reason: ReportReason;
     details?: string | null;
   }): Promise<Report>;
-  list(query?: { status?: ReportStatus }): Promise<Report[]>;
+  /** Newest first. */
+  list(query?: { status?: ReportStatus; reporterId?: ID; listingId?: ID }): Promise<Report[]>;
   resolve(id: ID, status: Exclude<ReportStatus, "open">, adminId: ID): Promise<Report>;
 }
 

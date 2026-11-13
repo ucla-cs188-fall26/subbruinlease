@@ -21,7 +21,7 @@ export function SiteFooter() {
           </Link>
         </nav>
       </Container>
-      <Container className="pb-8 text-xs text-muted/80">
+      <Container className="pb-8 text-xs text-muted">
         Not affiliated with or endorsed by UCLA. Always confirm your lease allows subleasing.
       </Container>
     </footer>

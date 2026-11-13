@@ -43,7 +43,7 @@ async function VerifyContent({ searchParams }: { searchParams: SearchParams }) {
 
       {devCode && (
         <div className="mb-6 rounded-2xl border border-dashed border-gold-300 bg-gold-50/60 p-4 text-sm">
-          <p className="flex items-center gap-1.5 font-bold text-gold-600">
+          <p className="flex items-center gap-1.5 font-bold text-gold-700">
             <FlaskConical className="size-4" aria-hidden />
             Dev mode: emails aren&apos;t sent yet
           </p>

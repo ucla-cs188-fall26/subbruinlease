@@ -6,7 +6,7 @@ import { devSignIn } from "./actions";
 export function DevSignIn({ next }: { next: string }) {
   return (
     <div className="mt-8 rounded-2xl border border-dashed border-gold-300 bg-gold-50/60 p-4">
-      <p className="flex items-center gap-1.5 text-sm font-bold text-gold-600">
+      <p className="flex items-center gap-1.5 text-sm font-bold text-gold-700">
         <FlaskConical className="size-4" aria-hidden />
         Dev mode: quick sign-in
       </p>

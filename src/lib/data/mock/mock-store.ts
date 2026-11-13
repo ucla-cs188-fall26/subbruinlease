@@ -255,6 +255,8 @@ export function createMockStore(): DataStore {
         return copy(
           db.reports
             .filter((r) => !query.status || r.status === query.status)
+            .filter((r) => !query.reporterId || r.reporterId === query.reporterId)
+            .filter((r) => !query.listingId || r.listingId === query.listingId)
             .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
         );
       },

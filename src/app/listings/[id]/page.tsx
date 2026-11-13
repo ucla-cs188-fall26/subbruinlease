@@ -8,6 +8,8 @@ import { ListingCard } from "@/components/listings/listing-card";
 import { PhotoGallery } from "@/components/listings/photo-gallery";
 import { BackToExplore, ShareButton } from "@/components/listings/listing-actions";
 import { SaveButton } from "@/components/listings/save-button";
+import { ModeratorCard } from "@/components/listings/moderator-tools";
+import { ReportButton } from "@/components/listings/report-button";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { getDataStore } from "@/lib/data";
 import { formatPostedDate } from "@/lib/format";
@@ -15,6 +17,7 @@ import { recentInquiryAbout } from "@/lib/inquiries";
 import { housingTypeLabels, roomTypeLabels } from "@/lib/labels";
 import { canSaveListing } from "@/lib/favorites";
 import { canViewListing, isOwner, isPublicListing, pickSimilar } from "@/lib/listings";
+import { canReportListing } from "@/lib/reports";
 import {
   AboutSection,
   AmenitiesSection,
@@ -68,11 +71,16 @@ async function ListingContent({
   if (!listing || !canViewListing(listing, user)) notFound();
 
   const viewerIsOwner = isOwner(listing, user);
-  const [allPublished, savedList, sentList] = await Promise.all([
+  const viewerIsAdmin = user?.role === "admin";
+  const [allPublished, savedList, sentList, myOpenReports, ownerProfile] = await Promise.all([
     listing.status === "published" ? store.listings.list() : [],
     user ? store.favorites.listIds(user.id) : [],
     user && !viewerIsOwner ? store.inquiries.listSent(user.id) : [],
+    user && !viewerIsOwner ? store.reports.list({ reporterId: user.id, listingId: listing.id, status: "open" }) : [],
+    viewerIsAdmin && !viewerIsOwner ? store.profiles.get(listing.ownerId) : null,
   ]);
+  // Signed-out visitors see a "log in to report" link; owners see nothing.
+  const showReport = !viewerIsOwner && isPublicListing(listing) && (user === null || canReportListing(listing, user));
   // If they messaged about this place recently, show that instead of a fresh form.
   const recent = recentInquiryAbout(sentList, listing.id);
   const recentlySentOn = recent ? `on ${formatPostedDate(recent.createdAt)}` : null;
@@ -140,6 +148,20 @@ async function ListingContent({
         <aside className="order-first space-y-4 lg:order-none lg:self-start lg:[@media(min-height:62rem)]:sticky lg:[@media(min-height:62rem)]:top-24" aria-label="Price and contact">
           <PriceCard listing={listing} viewer={user} recentlySentOn={recentlySentOn} />
           <SafetyCard />
+          {showReport && (
+            <div className="px-1">
+              <ReportButton listingId={listing.id} signedIn={user !== null} alreadyReported={myOpenReports.length > 0} />
+            </div>
+          )}
+          {ownerProfile && (
+            <ModeratorCard
+              listingId={listing.id}
+              ownerId={ownerProfile.id}
+              ownerName={ownerProfile.displayName}
+              hidden={listing.status === "hidden"}
+              canSuspend={ownerProfile.status === "active" && ownerProfile.role !== "admin"}
+            />
+          )}
         </aside>
       </div>
 

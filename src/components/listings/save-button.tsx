@@ -88,7 +88,7 @@ export function SaveButton({ listingId, title, saved, signedIn, variant = "icon"
           aria-label={label}
           className={cn(
             buttonStyles({ variant: "ghost", size: "sm" }),
-            optimisticSaved && "text-gold-600 hover:bg-gold-50",
+            optimisticSaved && "text-gold-700 hover:bg-gold-50",
           )}
         >
           {icon}
