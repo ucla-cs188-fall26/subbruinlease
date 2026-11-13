@@ -62,6 +62,17 @@ returns an implementation of the `DataStore` interface:
 
 Fake accounts: `demo@ucla.edu` (regular student with a few listings) and `admin@ucla.edu`.
 
+### Supabase setup (from `main`)
+
+The real database work lives alongside the fake data and isn't switched on yet:
+
+- `supabase/migrations/`: tables, Row Level Security, the UCLA-only signup hook, and storage buckets
+- `src/lib/database.types.ts`: TypeScript types generated from that schema
+- `src/lib/supabase/`: browser and server clients, plus `updateSession` (session refresh, to be
+  called from `src/proxy.ts`)
+- `src/app/auth/confirm/`: the magic-link confirmation route, with `src/lib/auth/safe-next.ts`
+  guarding its redirects (`npm run test:redirect`)
+
 ## Search & filters
 
 The Explore page (`/`) keeps every filter in the URL, for example
