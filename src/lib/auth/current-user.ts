@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getDataStore } from "@/lib/data";
 import type { Profile } from "@/lib/types";
 import { readSessionUserId } from "./session";
+import { readSupabaseUserId } from "./supabase-auth";
 
 /** What the app knows about the signed-in user. Safe to pass to client components. */
 export type CurrentUser = Pick<
@@ -16,7 +17,7 @@ export type CurrentUser = Pick<
  * inside a <Suspense> boundary. Deduplicated per request.
  */
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
-  const userId = await readSessionUserId();
+  const userId = isMockAuth() ? await readSessionUserId() : await readSupabaseUserId();
   if (!userId) return null;
 
   const profile = await getDataStore().profiles.get(userId);

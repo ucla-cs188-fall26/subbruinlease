@@ -1,9 +1,11 @@
-// Supabase session refresh, from the root proxy.ts on main. With a src/ folder, Next only
-// runs src/proxy.ts, so this is kept as a helper for src/proxy.ts to call once
-// DATA_SOURCE=supabase is wired up (integration step). Not called yet.
+// Supabase session refresh, called from src/proxy.ts when DATA_SOURCE=supabase.
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+/**
+ * Refreshes the Supabase session cookies if needed and reports who is signed in.
+ * Always return (or copy cookies from) `response`, or a refreshed session is lost.
+ */
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request })
 
@@ -28,12 +30,9 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // refreshes the token and rewrites the cookies. do not remove.
-  await supabase.auth.getUser()
+  // Verifies the JWT and refreshes the token when it's close to expiring. Do not remove.
+  const { data } = await supabase.auth.getClaims()
+  const userId = (data?.claims?.sub as string | undefined) ?? null
 
-  return response
+  return { response, userId }
 }
-
-// Paths the session refresh should run on (from the original proxy.ts). Merge into
-// src/proxy.ts's matcher during integration.
-export const sessionMatcher = '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|webp)$).*)'

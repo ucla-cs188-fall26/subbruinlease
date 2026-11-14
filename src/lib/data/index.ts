@@ -1,6 +1,7 @@
 import "server-only";
 import type { DataStore } from "./store";
 import { createMockStore } from "./mock/mock-store";
+import { createSupabaseStore } from "./supabase/supabase-store";
 
 export type { DataStore } from "./store";
 export { NotFoundError } from "./store";
@@ -9,7 +10,7 @@ export { NotFoundError } from "./store";
  * Which backend to use. Set DATA_SOURCE in .env.local.
  * - "mock" (default): in-memory fake data from ./mock/seed.ts. Changes reset when the
  *   dev server restarts.
- * - "supabase": not built yet. Add ./supabase/supabase-store.ts implementing DataStore.
+ * - "supabase": the Supabase database (./supabase/supabase-store.ts), via the service role.
  */
 const source = process.env.DATA_SOURCE ?? "mock";
 
@@ -25,9 +26,8 @@ export function getDataStore(): DataStore {
       store = createMockStore();
       break;
     case "supabase":
-      throw new Error(
-        "DATA_SOURCE=supabase isn't implemented yet. See docs/data-model.md, then add a Supabase DataStore.",
-      );
+      store = createSupabaseStore();
+      break;
     default:
       throw new Error(`Unknown DATA_SOURCE "${source}". Use "mock" or "supabase".`);
   }

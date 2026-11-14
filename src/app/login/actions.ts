@@ -8,6 +8,7 @@ import { defaultDisplayName, isUclaEmail, normalizeEmail, safeNextPath } from "@
 import { issueLoginCode, verifyLoginCode } from "@/lib/auth/login-codes";
 import { createSession, destroySession } from "@/lib/auth/session";
 import { isMockAuth } from "@/lib/auth/current-user";
+import { sendSupabaseCode, signOutSupabase, verifySupabaseCode } from "@/lib/auth/supabase-auth";
 import type { FormState } from "@/lib/form-state";
 
 const emailSchema = z
@@ -17,11 +18,12 @@ const emailSchema = z
   .pipe(z.email("That doesn't look like an email address."))
   .refine(isUclaEmail, "Use your @ucla.edu or @g.ucla.edu email.");
 
+/** Mock mode: codes aren't emailed. They're logged and shown on the verify page. */
 async function sendLoginCode(email: string, code: string) {
-  // Email delivery is added in step 9. Until then the code is logged and, in mock
-  // mode, shown on the verify page.
   console.info(`[auth] Sign-in code for ${email}: ${code}`);
 }
+
+const SUSPENDED = "This account has been suspended. Contact the subBruinLease team for help.";
 
 function verifyUrl(email: string, next: string, sent?: boolean) {
   const params = new URLSearchParams({ email, next });
@@ -39,8 +41,13 @@ export async function requestCode(_prev: FormState, formData: FormData): Promise
   const email = normalizeEmail(parsed.data);
 
   const existing = await getDataStore().profiles.getByEmail(email);
-  if (existing?.status === "suspended") {
-    return { error: "This account has been suspended. Contact the subBruinLease team for help." };
+  if (existing?.status === "suspended") return { error: SUSPENDED };
+
+  if (!isMockAuth()) {
+    const sent = await sendSupabaseCode(email);
+    // On cooldown a code was sent moments ago; just continue to the code screen.
+    if (!sent.ok && sent.reason !== "cooldown") return { error: sent.message };
+    redirect(verifyUrl(email, next, sent.ok));
   }
 
   const issued = issueLoginCode(email);
@@ -56,6 +63,12 @@ export async function requestCode(_prev: FormState, formData: FormData): Promise
 export async function resendCode(_prev: FormState, formData: FormData): Promise<FormState> {
   const email = normalizeEmail(String(formData.get("email") ?? ""));
   if (!isUclaEmail(email)) return { error: "Start over with your UCLA email." };
+
+  if (!isMockAuth()) {
+    const sent = await sendSupabaseCode(email);
+    return sent.ok ? { message: "New code sent." } : { error: sent.message };
+  }
+
   const issued = issueLoginCode(email);
   if (!issued.ok) return { error: `Please wait ${issued.retryInSeconds}s before requesting another code.` };
   await sendLoginCode(email, issued.code);
@@ -71,6 +84,8 @@ export async function verifyCode(_prev: FormState, formData: FormData): Promise<
 
   if (!isUclaEmail(email)) return { error: "Start over with your UCLA email." };
   if (!/^\d{6}$/.test(code)) return { fieldErrors: { code: ["Enter the 6-digit code."] } };
+
+  if (!isMockAuth()) return verifyWithSupabase(email, code, next);
 
   const result = verifyLoginCode(email, code);
   if (!result.ok) {
@@ -88,11 +103,41 @@ export async function verifyCode(_prev: FormState, formData: FormData): Promise<
   if (!profile) {
     profile = await store.profiles.create({ email, displayName: defaultDisplayName(email) });
   }
-  if (profile.status === "suspended") {
-    return { error: "This account has been suspended. Contact the subBruinLease team for help." };
-  }
+  if (profile.status === "suspended") return { error: SUSPENDED };
 
   await createSession(profile.id);
+  redirect(isNew ? `/profile?welcome=1&next=${encodeURIComponent(next)}` : next);
+}
+
+/**
+ * Supabase sign-in. Supabase creates the user (and the trigger creates the profile) when
+ * the code is sent, so "new user" means the email wasn't verified before this code.
+ */
+async function verifyWithSupabase(email: string, code: string, next: string): Promise<FormState> {
+  const store = getDataStore();
+  const before = await store.profiles.getByEmail(email);
+  const isNew = !before?.emailVerified;
+
+  const result = await verifySupabaseCode(email, code);
+  if (!result.ok) {
+    const messages = {
+      invalid: "That code isn't right or has expired. Check your email, or request a new code.",
+      too_many: "Too many attempts. Wait a minute, then request a new code.",
+    } as const;
+    return { fieldErrors: { code: [messages[result.reason]] } };
+  }
+
+  const profile = await store.profiles.get(result.userId);
+  if (!profile) {
+    await signOutSupabase();
+    console.error(`[auth] No profile row for Supabase user ${result.userId}`);
+    return { error: "Something went wrong setting up your account. Try again in a minute." };
+  }
+  if (profile.status === "suspended") {
+    await signOutSupabase();
+    return { error: SUSPENDED };
+  }
+
   redirect(isNew ? `/profile?welcome=1&next=${encodeURIComponent(next)}` : next);
 }
 
@@ -107,6 +152,7 @@ export async function devSignIn(formData: FormData) {
 }
 
 export async function signOut() {
-  await destroySession();
+  if (isMockAuth()) await destroySession();
+  else await signOutSupabase();
   redirect("/");
 }

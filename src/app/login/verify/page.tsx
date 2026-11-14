@@ -34,8 +34,8 @@ async function VerifyContent({ searchParams }: { searchParams: SearchParams }) {
   return (
     <>
       <p className="-mt-4 mb-6 text-muted">
-        We sent a 6-digit code to <span className="font-bold text-ink">{email}</span>. It expires
-        in 10 minutes.{" "}
+        We sent a 6-digit code to <span className="font-bold text-ink">{email}</span>.{" "}
+        {isMockAuth() ? "It expires in 10 minutes." : "It can only be used once."}{" "}
         <Link href={`/login?next=${encodeURIComponent(next)}`} className="font-bold text-bruin-600 hover:underline">
           Use a different email
         </Link>
