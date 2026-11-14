@@ -358,11 +358,6 @@ function listingRepo(): ListingRepo {
   }
 }
 
-/** Methods not connected to Supabase yet throw a clear error when called. */
-const notYet = (name: string) => () => {
-  throw new Error(`${name} isn't connected to Supabase yet.`);
-};
-
 function favoriteRepo(listings: ListingRepo): FavoriteRepo {
   const db = () => getSupabaseAdmin();
   return {
@@ -496,8 +491,30 @@ function reportRepo(): ReportRepo {
       const res = await q.order("created_at", { ascending: false });
       return (check(res, "reports.list") ?? []).map(toReport);
     },
-    create: notYet("reports.create"),
-    resolve: notYet("reports.resolve"),
+    async create({ listingId, reporterId, reason, details = null }) {
+      if (!isUuid(listingId)) throw new NotFoundError("Listing", listingId);
+      const res = await db()
+        .from("reports")
+        .insert({ listing_id: listingId, reporter_id: reporterId, reason, details })
+        .select("*")
+        .single();
+      if (res.error?.code === "23503") throw new NotFoundError("Listing", listingId);
+      const row = check(res, "reports.create");
+      if (!row) throw new Error("Supabase reports.create returned no row");
+      return toReport(row);
+    },
+    async resolve(id, status, adminId) {
+      if (!isUuid(id)) throw new NotFoundError("Report", id);
+      const res = await db()
+        .from("reports")
+        .update({ status, resolved_by: adminId, resolved_at: new Date().toISOString() })
+        .eq("id", id)
+        .select("*")
+        .maybeSingle();
+      const row = check(res, "reports.resolve");
+      if (!row) throw new NotFoundError("Report", id);
+      return toReport(row);
+    },
   };
 }
 

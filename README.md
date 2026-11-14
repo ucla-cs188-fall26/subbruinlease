@@ -174,6 +174,15 @@ Admins (dev sign-in: **Admin**) get `/admin` and a "Moderator tools" card on lis
 | Suspend user    | They can't sign in, existing sessions stop working, live listings hidden  |
 | Lift suspension | They can sign in again; hidden listings stay hidden until restored        |
 
+With `DATA_SOURCE=supabase`, nobody is an admin until you promote someone. They need to
+have signed in once (so they have a profile), then run, with their email:
+
+```bash
+npx supabase db query --remote "update public.profiles set role = 'admin' where email = 'someone@ucla.edu'"
+```
+
+They'll see `/admin` on their next page load. Set `role = 'student'` to undo it.
+
 ## Pages & polish
 
 `/safety`, `/terms`, and `/privacy` are plain text pages (`src/app/*/page.tsx`). Have the
