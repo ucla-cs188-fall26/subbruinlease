@@ -19,8 +19,11 @@ export async function sendSupabaseCode(email: string): Promise<SendCodeResult> {
   });
   if (!error) return { ok: true };
 
+  // Supabase allows one email per address per minute ("...only request this after 42 seconds").
   if (error.status === 429 || error.code === "over_email_send_rate_limit") {
-    return { ok: false, reason: "cooldown", message: "Please wait a minute before requesting another code." };
+    const seconds = Number(/after (\d+) seconds?/.exec(error.message)?.[1]);
+    const wait = seconds > 0 ? `${seconds} second${seconds === 1 ? "" : "s"}` : "a minute";
+    return { ok: false, reason: "cooldown", message: `Please wait ${wait} before requesting another code.` };
   }
   // Raised by the before-user-created hook for non-UCLA addresses.
   if (error.status === 403 || error.status === 400) {
