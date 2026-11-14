@@ -426,10 +426,56 @@ function inquiryRepo(): InquiryRepo {
         .order("created_at", { ascending: false });
       return (check(res, "inquiries.listSent") ?? []).map(toInquiry);
     },
-    create: notYet("inquiries.create"),
-    listReceived: notYet("inquiries.listReceived"),
-    countSentSince: notYet("inquiries.countSentSince"),
-    setStatus: notYet("inquiries.setStatus"),
+    async create({ listingId, senderId, message, desiredFrom = null, desiredTo = null }) {
+      if (!isUuid(listingId)) throw new NotFoundError("Listing", listingId);
+      const owner = check(
+        await db().from("listings").select("owner_id").eq("id", listingId).maybeSingle(),
+        "inquiries.create",
+      );
+      if (!owner) throw new NotFoundError("Listing", listingId);
+      const res = await db()
+        .from("inquiries")
+        .insert({
+          listing_id: listingId,
+          sender_id: senderId,
+          // The inquiries_set_recipient trigger sets this to the listing's owner either way.
+          recipient_id: owner.owner_id,
+          message,
+          desired_from: desiredFrom,
+          desired_to: desiredTo,
+        })
+        .select("*")
+        .single();
+      const row = check(res, "inquiries.create");
+      if (!row) throw new Error("Supabase inquiries.create returned no row");
+      return toInquiry(row);
+    },
+    async listReceived(userId) {
+      if (!isUuid(userId)) return [];
+      const res = await db()
+        .from("inquiries")
+        .select("*")
+        .eq("recipient_id", userId)
+        .order("created_at", { ascending: false });
+      return (check(res, "inquiries.listReceived") ?? []).map(toInquiry);
+    },
+    async countSentSince(userId, since) {
+      if (!isUuid(userId)) return 0;
+      const res = await db()
+        .from("inquiries")
+        .select("id", { count: "exact", head: true })
+        .eq("sender_id", userId)
+        .gte("created_at", since.toISOString());
+      if (res.error) throw new Error(`Supabase inquiries.countSentSince failed: ${res.error.message}`);
+      return res.count ?? 0;
+    },
+    async setStatus(id, status) {
+      if (!isUuid(id)) throw new NotFoundError("Inquiry", id);
+      const res = await db().from("inquiries").update({ status }).eq("id", id).select("*").maybeSingle();
+      const row = check(res, "inquiries.setStatus");
+      if (!row) throw new NotFoundError("Inquiry", id);
+      return toInquiry(row);
+    },
   };
 }
 
