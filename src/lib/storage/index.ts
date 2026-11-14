@@ -1,10 +1,11 @@
 import "server-only";
 import { LocalFileStorage } from "./local-files";
+import { SupabaseImageStorage } from "./supabase-storage";
 
 /**
- * Where listing photos are kept. Locally they're files under .data/uploads and served by
- * the /uploads route. With Supabase this becomes the `listing-images` storage bucket
- * (see docs/data-model.md); only this interface's implementation changes.
+ * Where listing photos are kept. In mock mode they're files under .data/uploads, served by
+ * the /uploads route. With DATA_SOURCE=supabase they go to the public `listing-images`
+ * storage bucket (see docs/data-model.md).
  */
 export interface ImageStorage {
   /** Saves an already-processed WebP image and returns its public URL. */
@@ -17,8 +18,7 @@ let storage: ImageStorage | undefined;
 
 export function getImageStorage(): ImageStorage {
   const source = process.env.DATA_SOURCE ?? "mock";
-  if (source !== "mock") {
-    throw new Error(`No image storage for DATA_SOURCE=${source} yet. Add a Supabase implementation.`);
-  }
+  if (source === "supabase") return (storage ??= new SupabaseImageStorage());
+  if (source !== "mock") throw new Error(`Unknown DATA_SOURCE: ${source}`);
   return (storage ??= new LocalFileStorage(process.env.UPLOAD_DIR ?? ".data/uploads"));
 }

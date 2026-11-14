@@ -170,9 +170,13 @@ Every write needs an active (not suspended) account with a verified email
 - The app re-encodes every photo before storing it: WebP, at most 2000px on the long side,
   with metadata (including GPS location) removed. Uploads to the server are capped at 4 MB.
   See `src/lib/images.ts`.
-- In the code, storage sits behind the `ImageStorage` interface in `src/lib/storage/`. Locally
-  photos are written to `.data/uploads/` and served from `/uploads/{owner_id}/{file}.webp`.
-  A Supabase version only needs to implement `save()` and return the bucket's public URL.
+- In the code, storage sits behind the `ImageStorage` interface in `src/lib/storage/`. In mock
+  mode photos are written to `.data/uploads/` and served from `/uploads/{owner_id}/{file}.webp`.
+  With `DATA_SOURCE=supabase` they're uploaded (with the service role, after `/api/uploads` has
+  checked the user) to `listing-images/{owner_id}/{random}.webp`, and the listing stores the
+  public URL plus `storage_path`. A listing only accepts photos from its owner's own folder.
+- Photos removed from a listing, or left over from an abandoned form, stay in the bucket for now.
+  `storage_path` is there so a cleanup job can find them later.
 
 ## Limits the app enforces
 

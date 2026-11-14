@@ -15,6 +15,7 @@ import type {
 import type { Tables, TablesInsert } from "@/lib/database.types";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { compareListings, matchesFilters } from "@/lib/search";
+import { bucketPathOf } from "@/lib/storage/photo-urls";
 import {
   NotFoundError,
   type DataStore,
@@ -345,7 +346,13 @@ function listingRepo(): ListingRepo {
     if (images.length === 0) return [];
     const res = await db()
       .from("listing_images")
-      .insert(images.map((img, position) => ({ listing_id: listingId, url: img.url, alt: img.alt, position })))
+      .insert(images.map((img, position) => ({
+          listing_id: listingId,
+          url: img.url,
+          storage_path: bucketPathOf(img.url),
+          alt: img.alt,
+          position,
+        })),)
       .select("*");
     return check(res, "listing_images.insert") ?? [];
   }

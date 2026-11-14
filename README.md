@@ -107,9 +107,9 @@ permission). Students can **save a draft** or **publish**. Validation rules live
 
 Photos upload one at a time to `POST /api/uploads` as soon as they're picked. The browser
 shrinks big phone photos first, then the server checks that the file really is an image and
-re-encodes it, which strips location data. Locally, photos are saved in `.data/uploads/`
+re-encodes it, which strips location data. With fake data, photos are saved in `.data/uploads/`
 (ignored by git) and disappear from listings when the server restarts, like the rest of the
-fake data.
+fake data. With `DATA_SOURCE=supabase` they go to the public `listing-images` storage bucket.
 
 ## Managing listings
 

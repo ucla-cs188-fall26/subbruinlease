@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { AMENITIES, NEIGHBORHOODS, type ListingInput } from "@/lib/types";
 import { addDays, isValidDate } from "@/lib/search";
+import { isOwnUpload } from "@/lib/storage/photo-urls";
 
 /* Limits shared by the form, the upload endpoint, and the server action. */
 export const MAX_PHOTOS = 8;
@@ -17,15 +18,13 @@ export const MAX_OPEN_LISTINGS = 5;
 export type ListingIntent = "draft" | "publish";
 
 /** Uploaded photo URLs look like /uploads/{ownerId}/{random}.webp */
-const UPLOAD_URL = /^\/uploads\/[A-Za-z0-9_-]+\/[A-Za-z0-9_-]+\.webp$/;
-
 /**
  * A photo URL is allowed if it's one of this user's uploads, or it was already on the
  * listing (e.g. seeded photos when editing).
  */
 export function isAllowedPhotoUrl(url: string, ownerId: string, existing: readonly string[] = []) {
   if (existing.includes(url)) return true;
-  return UPLOAD_URL.test(url) && url.startsWith(`/uploads/${ownerId}/`);
+  return isOwnUpload(url, ownerId);
 }
 
 /**
