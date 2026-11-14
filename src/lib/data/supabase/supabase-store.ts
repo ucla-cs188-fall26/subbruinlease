@@ -363,17 +363,54 @@ const notYet = (name: string) => () => {
   throw new Error(`${name} isn't connected to Supabase yet.`);
 };
 
-function favoriteRepo(): FavoriteRepo {
+function favoriteRepo(listings: ListingRepo): FavoriteRepo {
   const db = () => getSupabaseAdmin();
   return {
+    async listListings(userId) {
+      if (!isUuid(userId)) return [];
+      const res = await db()
+        .from("favorites")
+        .select("listing_id")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+      const ids = (check(res, "favorites.listListings") ?? []).map((r) => r.listing_id);
+      if (ids.length === 0) return [];
+      // Any status but draft, so "no longer available" can be shown. Most recently saved first.
+      const byId = new Map(
+        (await listings.list({ ids, status: "any" })).filter((l) => l.status !== "draft").map((l) => [l.id, l]),
+      );
+      return ids.flatMap((id) => byId.get(id) ?? []);
+    },
     async listIds(userId) {
       if (!isUuid(userId)) return [];
       const res = await db().from("favorites").select("listing_id").eq("user_id", userId);
       return (check(res, "favorites.listIds") ?? []).map((r) => r.listing_id);
     },
-    listListings: notYet("favorites.listListings"),
-    add: notYet("favorites.add"),
-    remove: notYet("favorites.remove"),
+    async add(userId, listingId) {
+      if (!isUuid(listingId)) throw new NotFoundError("Listing", listingId);
+      // Saving twice is fine: keep the original row (and its date).
+      const upsert = await db()
+        .from("favorites")
+        .upsert({ user_id: userId, listing_id: listingId }, { onConflict: "user_id,listing_id", ignoreDuplicates: true });
+      if (upsert.error?.code === "23503") throw new NotFoundError("Listing", listingId);
+      check(upsert, "favorites.add");
+      const res = await db()
+        .from("favorites")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("listing_id", listingId)
+        .single();
+      const row = check(res, "favorites.add");
+      if (!row) throw new NotFoundError("Favorite", listingId);
+      return { userId: row.user_id, listingId: row.listing_id, createdAt: row.created_at };
+    },
+    async remove(userId, listingId) {
+      if (!isUuid(userId) || !isUuid(listingId)) return;
+      check(
+        await db().from("favorites").delete().eq("user_id", userId).eq("listing_id", listingId),
+        "favorites.remove",
+      );
+    },
   };
 }
 
@@ -419,10 +456,11 @@ function reportRepo(): ReportRepo {
 }
 
 export function createSupabaseStore(): DataStore {
+  const listings = listingRepo();
   return {
     profiles: profileRepo(),
-    listings: listingRepo(),
-    favorites: favoriteRepo(),
+    listings,
+    favorites: favoriteRepo(listings),
     inquiries: inquiryRepo(),
     reports: reportRepo(),
   };
