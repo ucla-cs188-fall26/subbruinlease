@@ -141,23 +141,32 @@ report again once it's resolved or dismissed.
 
 ## Access rules (Row Level Security)
 
-The app checks these in server code too, but the database should enforce them as well.
+The app's server code talks to the database with the **service role**, which bypasses these
+policies, and checks permissions itself (`requireUser`, owner checks). The policies protect the
+database from anyone calling the Supabase API directly with the public anon key or their own
+token. They live in `supabase/migrations/20261113000002_rls_policies_v2.sql`.
+
+Browsing is public: no sign-in needed to read public listings, their photos, or public profile
+fields.
 
 | Table            | Read                                                         | Write                                                        |
 | ---------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| `profiles`       | signed-in users can read public fields (not `email`). Users read their own row in full | users update their own row (not `role`/`status`). Admins update any |
-| `listings`       | anyone can read `published` and `unavailable`. Owners read all of their own. Admins read all | owners insert and update their own. Admins update any (to set `hidden`) |
+| `profiles`       | anyone can read public fields of active users. `email`, `role` and `status` aren't readable through the API (column grants) | users update their own `display_name`, `avatar_url`, `grad_year`, `bio` |
+| `listings`       | anyone can read `published` and `unavailable`. Owners read all of their own. Admins read all | owners insert and update their own. Only admins can set or clear `hidden` (trigger). Admins update any |
 | `listing_images` | same as the parent listing                                   | owner of the parent listing                                  |
-| `favorites`      | own rows only                                                | own rows only                                                |
-| `inquiries`      | sender or recipient                                          | sender inserts. Recipient updates `status`                   |
-| `reports`        | admins only (reporters can read their own)                   | any signed-in user inserts. Admins update                    |
+| `favorites`      | own rows only                                                | own rows, only for listings you can see                      |
+| `inquiries`      | sender or recipient                                          | sender inserts on a public listing (`recipient_id` is set to the owner by a trigger). Recipient updates `status` only |
+| `reports`        | admins, and reporters their own                              | signed-in users insert on listings they can see. Admins update `status`/`resolved_by`/`resolved_at` |
 
-Suspended users shouldn't be able to insert anything.
+Every write needs an active (not suspended) account with a verified email
+(`is_active_user()`). Admin checks use `is_admin()`.
 
 ## Storage
 
-- Bucket `listing-images`, publicly readable. Only the listing owner can write, under the path
-  `{owner_id}/{filename}`.
+- Bucket `listing-images`, public, WebP only, 4 MB per file. Signed-in users can write only
+  under their own folder, `{owner_id}/{filename}`. (Photos are uploaded before the listing
+  exists, so the folder is the owner, not the listing.)
+- The `avatars` bucket from the first storage migration still exists but the app doesn't use it.
 - The app re-encodes every photo before storing it: WebP, at most 2000px on the long side,
   with metadata (including GPS location) removed. Uploads to the server are capped at 4 MB.
   See `src/lib/images.ts`.
