@@ -57,21 +57,34 @@ returns an implementation of the `DataStore` interface:
 
 - `DATA_SOURCE=mock` (default): fake data from `src/lib/data/mock/seed.ts`. Edits live in
   memory and reset when the dev server restarts.
-- `DATA_SOURCE=supabase`: not built yet. See [docs/data-model.md](docs/data-model.md) for the
-  tables the database needs.
+- `DATA_SOURCE=supabase`: the real database, through `src/lib/data/supabase/supabase-store.ts`
+  (server-side, with the service role key; permission checks happen in the server code). Photos
+  go to the `listing-images` storage bucket and sign-in uses Supabase Auth. See
+  [docs/data-model.md](docs/data-model.md) for the tables and access rules.
 
-Fake accounts: `demo@ucla.edu` (regular student with a few listings) and `admin@ucla.edu`.
+Fake accounts (mock mode): `demo@ucla.edu` (regular student with a few listings) and `admin@ucla.edu`.
 
-### Supabase setup (from `main`)
-
-The real database work lives alongside the fake data and isn't switched on yet:
+### Supabase setup
 
 - `supabase/migrations/`: tables, Row Level Security, the UCLA-only signup hook, and storage buckets
 - `src/lib/database.types.ts`: TypeScript types generated from that schema
-- `src/lib/supabase/`: browser and server clients, plus `updateSession` (session refresh, to be
-  called from `src/proxy.ts`)
+  (`npx supabase gen types typescript --remote > src/lib/database.types.ts`)
+- `src/lib/supabase/`: browser, server, and service-role clients, plus `updateSession`
+  (session refresh, called from `src/proxy.ts`)
 - `src/app/auth/confirm/`: the magic-link confirmation route, with `src/lib/auth/safe-next.ts`
   guarding its redirects (`npm run test:redirect`)
+
+**Demo data.** A new database is empty. `supabase/demo-data.sql` adds the same posters and
+listings as mock mode (with Unsplash photos and one open report). It's safe to run twice, and
+`supabase/demo-data-remove.sql` takes it all out again:
+
+```bash
+npx supabase db query --remote -f supabase/demo-data.sql
+npx supabase db query --remote -f supabase/demo-data-remove.sql
+```
+
+Demo posters have `@demo.subbruinlease.invalid` emails, so nobody can sign in as them and
+messages to their listings are saved but never emailed to anyone.
 
 ## Search & filters
 

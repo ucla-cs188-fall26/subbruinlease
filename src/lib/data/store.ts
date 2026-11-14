@@ -19,8 +19,8 @@ import type { ListingFilters } from "@/lib/search";
  * The one interface the app uses to read and write data.
  *
  * Pages and server actions call `getDataStore()` (see ./index.ts) and never talk to a
- * database directly. Today it's backed by in-memory fake data; later a Supabase
- * implementation of this same interface gets swapped in.
+ * database directly. DATA_SOURCE picks the implementation: in-memory fake data (./mock) or
+ * Supabase (./supabase).
  *
  * All methods are async so the swap doesn't change any calling code.
  * Permission checks (e.g. "only the owner can edit") happen in the calling server
