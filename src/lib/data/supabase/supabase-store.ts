@@ -4,6 +4,7 @@ import type {
   Inquiry,
   Listing,
   ListingImage,
+  ListingInput,
   ListingStatus,
   ListingWithOwner,
   Neighborhood,
@@ -11,7 +12,7 @@ import type {
   PublicProfile,
   Report,
 } from "@/lib/types";
-import type { Tables } from "@/lib/database.types";
+import type { Tables, TablesInsert } from "@/lib/database.types";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { compareListings, matchesFilters } from "@/lib/search";
 import {
@@ -140,6 +141,34 @@ export function toReport(row: Tables<"reports">): Report {
   };
 }
 
+/** The listing columns the poster fills in (everything but images), as a partial row. */
+function toListingColumns(input: Partial<ListingInput>): Partial<TablesInsert<"listings">> {
+  const cols: Partial<TablesInsert<"listings">> = {
+    title: input.title,
+    description: input.description,
+    neighborhood: input.neighborhood,
+    location_hint: input.locationHint,
+    housing_type: input.housingType,
+    room_type: input.roomType,
+    furnished: input.furnished,
+    rent: input.rent,
+    security_deposit: input.securityDeposit,
+    utilities_included: input.utilitiesIncluded,
+    utilities_estimate: input.utilitiesEstimate,
+    available_from: input.availableFrom,
+    available_to: input.availableTo,
+    flexible_dates: input.flexibleDates,
+    bedrooms: input.bedrooms,
+    bathrooms: input.bathrooms,
+    roommates: input.roommates,
+    amenities: input.amenities,
+    house_rules: input.houseRules,
+    lease_permission: input.leasePermission,
+  };
+  // Leave out fields the caller didn't pass, so an update only touches what changed.
+  return Object.fromEntries(Object.entries(cols).filter(([, v]) => v !== undefined));
+}
+
 /** Newest first, by publishedAt then createdAt (same as the mock store). */
 function newestFirst(a: Listing, b: Listing) {
   return (b.publishedAt ?? b.createdAt).localeCompare(a.publishedAt ?? a.createdAt);
@@ -255,10 +284,71 @@ function listingRepo(): ListingRepo {
       return row ? toListingWithOwner(row) : null;
     },
 
-    create: notYet("listings.create"),
-    update: notYet("listings.update"),
-    setStatus: notYet("listings.setStatus"),
+    async create(ownerId, input, status) {
+      const res = await db()
+        .from("listings")
+        .insert({ ...(toListingColumns(input) as TablesInsert<"listings">), owner_id: ownerId, status })
+        .select("*")
+        .single();
+      const row = check(res, "listings.create");
+      if (!row) throw new Error("Supabase listings.create returned no row");
+      try {
+        const images = await replaceImages(row.id, input.images);
+        return toListing(row, images);
+      } catch (err) {
+        // Don't leave a listing behind without the photos the poster added.
+        await db().from("listings").delete().eq("id", row.id);
+        throw err;
+      }
+    },
+
+    async update(id, input) {
+      if (!isUuid(id)) throw new NotFoundError("Listing", id);
+      const { images, ...rest } = input;
+      const cols = toListingColumns(rest);
+      // Always write something, so updated_at moves even when only the photos changed
+      // (the listings_touch trigger sets the real value).
+      const res = await db()
+        .from("listings")
+        .update({ ...cols, updated_at: new Date().toISOString() })
+        .eq("id", id)
+        .select("*")
+        .maybeSingle();
+      const row = check(res, "listings.update");
+      if (!row) throw new NotFoundError("Listing", id);
+      const imageRows = images ? await replaceImages(id, images) : await loadImages(id);
+      return toListing(row, imageRows);
+    },
+
+    async setStatus(id, status) {
+      if (!isUuid(id)) throw new NotFoundError("Listing", id);
+      const res = await db()
+        .from("listings")
+        .update({ status })
+        .eq("id", id)
+        .select("*, images:listing_images(*)")
+        .maybeSingle();
+      const row = check(res, "listings.setStatus") as (ListingRow & { images: ImageRow[] }) | null;
+      if (!row) throw new NotFoundError("Listing", id);
+      return toListing(row, row.images);
+    },
   };
+
+  async function loadImages(listingId: string): Promise<ImageRow[]> {
+    const res = await db().from("listing_images").select("*").eq("listing_id", listingId);
+    return check(res, "listing_images.list") ?? [];
+  }
+
+  /** Swaps a listing's photos for `images`, in order (position 0 is the cover). */
+  async function replaceImages(listingId: string, images: ListingInput["images"]): Promise<ImageRow[]> {
+    check(await db().from("listing_images").delete().eq("listing_id", listingId), "listing_images.delete");
+    if (images.length === 0) return [];
+    const res = await db()
+      .from("listing_images")
+      .insert(images.map((img, position) => ({ listing_id: listingId, url: img.url, alt: img.alt, position })))
+      .select("*");
+    return check(res, "listing_images.insert") ?? [];
+  }
 }
 
 /** Methods not connected to Supabase yet throw a clear error when called. */
