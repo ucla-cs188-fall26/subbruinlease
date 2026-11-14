@@ -387,11 +387,10 @@ export type Database = {
     }
     Functions: {
       hook_restrict_signup_to_ucla: { Args: { event: Json }; Returns: Json }
+      is_active_user: { Args: never; Returns: boolean }
+      is_admin: { Args: never; Returns: boolean }
       is_listing_owner: { Args: { p_listing_id: string }; Returns: boolean }
-      is_verified_user: { Args: never; Returns: boolean }
       listing_is_visible: { Args: { p_listing_id: string }; Returns: boolean }
-      path_is_listing_owner: { Args: { p_folder: string }; Returns: boolean }
-      path_listing_is_visible: { Args: { p_folder: string }; Returns: boolean }
     }
     Enums: {
       account_status: "active" | "suspended"
