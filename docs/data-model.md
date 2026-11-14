@@ -4,9 +4,11 @@ This is what the app expects from the database. The TypeScript source of truth i
 [`src/lib/types.ts`](../src/lib/types.ts), and every read and write goes through the
 `DataStore` interface in [`src/lib/data/store.ts`](../src/lib/data/store.ts).
 
-The app currently runs on fake in-memory data (`DATA_SOURCE=mock`). When the Supabase
-database is ready, we add a Supabase implementation of `DataStore` that maps these tables
-to the TypeScript types, then switch `DATA_SOURCE=supabase`.
+The app currently runs on fake in-memory data (`DATA_SOURCE=mock`). The Supabase schema
+below lives in `supabase/migrations/` (the current shape comes from
+`20261113000001_align_schema_with_app.sql`), with generated types in
+`src/lib/database.types.ts`. A Supabase implementation of `DataStore` maps these tables to
+the TypeScript types; switching `DATA_SOURCE=supabase` turns it on.
 
 **Naming:** TypeScript uses `camelCase` and the database uses `snake_case`. For example,
 `availableFrom` in TypeScript is `available_from` in the database. The table below uses the
@@ -60,9 +62,14 @@ One row per user. `id` matches `auth.users.id` from Supabase Auth.
 | `lease_permission`   | enum `allowed`/`landlord_approved`/`pending` |                                        |
 | `created_at`         | timestamptz             |                                                             |
 | `updated_at`         | timestamptz             |                                                             |
-| `published_at`       | timestamptz, null       | set the first time it's published                           |
+| `published_at`       | timestamptz, null       | set by a trigger the first time it's published              |
+| `search_text`        | text, generated         | lowercased title + description + neighborhood + location hint, for text search |
 
-Search (`DataStore.listings.search`) has to follow the rules in `src/lib/search.ts`. In SQL,
+Publishing with `lease_permission = 'pending'` is allowed. The "at least 1 photo to publish"
+rule is checked by the app, not the database.
+
+Search (`DataStore.listings.search`) has to follow the rules in `src/lib/search.ts`. Text
+search matches every word as a substring of `search_text` (trigram index). In SQL,
 the date rule is roughly
 `available_from - slack <= :from AND available_to + slack >= :to`, where
 `slack = 7 days if flexible_dates else 0`.
@@ -75,11 +82,12 @@ Indexes worth having: `(status, published_at desc)`, `(owner_id)`, `(available_f
 | ------------ | --------------------- | ------------------------------------------- |
 | `id`         | uuid, PK              |                                             |
 | `listing_id` | uuid → `listings.id`, on delete cascade |                           |
-| `storage_path` | text                | path in the `listing-images` storage bucket. The app turns it into a URL (`url` in TypeScript) |
+| `url`        | text                  | public URL the app displays (`url` in TypeScript) |
+| `storage_path` | text, null          | object path in the `listing-images` bucket, when the photo lives there. Used for cleanup |
 | `alt`        | text                  |                                             |
 | `position`   | int                   | 0 = cover photo. Unique per listing         |
 
-A listing can have at most 8 images.
+A listing can have at most 8 images (enforced by a trigger).
 
 ### `favorites`
 
@@ -119,6 +127,17 @@ sender never sees the owner's email address.
 | `resolved_by` | uuid → `profiles.id`, null |                                                                     |
 | `resolved_at` | timestamptz, null    |                                                                           |
 | `created_at`  | timestamptz          |                                                                           |
+
+A student can have at most one `open` report per listing (partial unique index). They can
+report again once it's resolved or dismissed.
+
+## Auth sync
+
+- A trigger on `auth.users` creates the `profiles` row at signup, with `email` (lowercased)
+  and `email_verified`. A second trigger keeps both in sync when the user confirms or
+  changes their email.
+- Students can only update `display_name`, `avatar_url`, `grad_year` and `bio` on their own
+  profile (column-level grants). `role`, `status` and `email` change only through the server.
 
 ## Access rules (Row Level Security)
 

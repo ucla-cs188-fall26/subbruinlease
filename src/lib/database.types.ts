@@ -2,11 +2,7 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: '14.18'
-  }
+  
   "graphql_public": {
           Tables: {
             [_ in never]: never
@@ -67,36 +63,48 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"listing_contact": {
+                },"inquiries": {
                   Row: {
-                    "contact_email": string | null,"contact_phone": string | null,"created_at": string,"listing_id": string,"note": string | null,"preferred_method": Database["public"]['Enums']["contact_method"],"updated_at": string
+                    "created_at": string,"desired_from": string | null,"desired_to": string | null,"id": string,"listing_id": string,"message": string,"recipient_id": string,"sender_id": string,"status": Database["public"]['Enums']["inquiry_status"]
                   }
                   ComputedFields: never
                   Insert: {
-                    "contact_email"?: string | null,"contact_phone"?: string | null,"created_at"?: string,"listing_id": string,"note"?: string | null,"preferred_method"?: Database["public"]['Enums']["contact_method"],"updated_at"?: string
+                    "created_at"?: string,"desired_from"?: string | null,"desired_to"?: string | null,"id"?: string,"listing_id": string,"message": string,"recipient_id": string,"sender_id": string,"status"?: Database["public"]['Enums']["inquiry_status"]
                   }
                   Update: {
-                    "contact_email"?: string | null,"contact_phone"?: string | null,"created_at"?: string,"listing_id"?: string,"note"?: string | null,"preferred_method"?: Database["public"]['Enums']["contact_method"],"updated_at"?: string
+                    "created_at"?: string,"desired_from"?: string | null,"desired_to"?: string | null,"id"?: string,"listing_id"?: string,"message"?: string,"recipient_id"?: string,"sender_id"?: string,"status"?: Database["public"]['Enums']["inquiry_status"]
                   }
                   Relationships: [
                     {
-      foreignKeyName: "listing_contact_listing_id_fkey"
+      foreignKeyName: "inquiries_listing_id_fkey"
       columns: ["listing_id"]
-isOneToOne: true
+isOneToOne: false
       referencedRelation: "listings"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "inquiries_recipient_id_fkey"
+      columns: ["recipient_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "inquiries_sender_id_fkey"
+      columns: ["sender_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
       referencedColumns: ["id"]
     }
                   ]
                 },"listing_images": {
                   Row: {
-                    "created_at": string,"display_order": number,"height": number | null,"id": string,"listing_id": string,"storage_path": string,"width": number | null
+                    "alt": string,"created_at": string,"id": string,"listing_id": string,"position": number,"storage_path": string | null,"url": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"display_order"?: number,"height"?: number | null,"id"?: string,"listing_id": string,"storage_path": string,"width"?: number | null
+                    "alt"?: string,"created_at"?: string,"id"?: string,"listing_id": string,"position": number,"storage_path"?: string | null,"url": string
                   }
                   Update: {
-                    "created_at"?: string,"display_order"?: number,"height"?: number | null,"id"?: string,"listing_id"?: string,"storage_path"?: string,"width"?: number | null
+                    "alt"?: string,"created_at"?: string,"id"?: string,"listing_id"?: string,"position"?: number,"storage_path"?: string | null,"url"?: string
                   }
                   Relationships: [
                     {
@@ -107,36 +115,16 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"listing_private": {
-                  Row: {
-                    "created_at": string,"entry_notes": string | null,"listing_id": string,"unit": string | null,"updated_at": string
-                  }
-                  ComputedFields: never
-                  Insert: {
-                    "created_at"?: string,"entry_notes"?: string | null,"listing_id": string,"unit"?: string | null,"updated_at"?: string
-                  }
-                  Update: {
-                    "created_at"?: string,"entry_notes"?: string | null,"listing_id"?: string,"unit"?: string | null,"updated_at"?: string
-                  }
-                  Relationships: [
-                    {
-      foreignKeyName: "listing_private_listing_id_fkey"
-      columns: ["listing_id"]
-isOneToOne: true
-      referencedRelation: "listings"
-      referencedColumns: ["id"]
-    }
-                  ]
                 },"listings": {
                   Row: {
-                    "available_from": string,"available_until": string,"bathrooms": number,"bedrooms": number,"city": string,"created_at": string,"dates_flexible": boolean,"description": string,"furnished": boolean,"id": string,"latitude": number | null,"laundry_available": boolean,"longitude": number | null,"monthly_rent": number,"neighborhood": string,"owner_id": string,"parking_available": boolean,"postal_code": string | null,"region": string,"room_type": Database["public"]['Enums']["room_type"],"search_tsv": unknown,"security_deposit": number | null,"status": Database["public"]['Enums']["listing_status"],"street_address": string,"sublease_permission_status": Database["public"]['Enums']["sublease_permission"],"title": string,"total_roommates": number | null,"updated_at": string,"utilities_cost": number | null,"utilities_included": boolean,"wifi_included": boolean
+                    "amenities": (string)[],"available_from": string,"available_to": string,"bathrooms": number,"bedrooms": number,"created_at": string,"description": string,"flexible_dates": boolean,"furnished": boolean,"house_rules": string | null,"housing_type": Database["public"]['Enums']["housing_type"],"id": string,"lease_permission": Database["public"]['Enums']["lease_permission"],"location_hint": string,"neighborhood": string,"owner_id": string,"published_at": string | null,"rent": number,"room_type": Database["public"]['Enums']["room_type"],"roommates": number,"search_text": string | null,"security_deposit": number | null,"status": Database["public"]['Enums']["listing_status"],"title": string,"updated_at": string,"utilities_estimate": number | null,"utilities_included": boolean
                   }
                   ComputedFields: never
                   Insert: {
-                    "available_from": string,"available_until": string,"bathrooms": number,"bedrooms": number,"city"?: string,"created_at"?: string,"dates_flexible"?: boolean,"description": string,"furnished"?: boolean,"id"?: string,"latitude"?: number | null,"laundry_available"?: boolean,"longitude"?: number | null,"monthly_rent": number,"neighborhood": string,"owner_id": string,"parking_available"?: boolean,"postal_code"?: string | null,"region"?: string,"room_type": Database["public"]['Enums']["room_type"],"search_tsv"?: never,"security_deposit"?: number | null,"status"?: Database["public"]['Enums']["listing_status"],"street_address": string,"sublease_permission_status"?: Database["public"]['Enums']["sublease_permission"],"title": string,"total_roommates"?: number | null,"updated_at"?: string,"utilities_cost"?: number | null,"utilities_included"?: boolean,"wifi_included"?: boolean
+                    "amenities"?: (string)[],"available_from": string,"available_to": string,"bathrooms": number,"bedrooms": number,"created_at"?: string,"description": string,"flexible_dates"?: boolean,"furnished"?: boolean,"house_rules"?: string | null,"housing_type": Database["public"]['Enums']["housing_type"],"id"?: string,"lease_permission": Database["public"]['Enums']["lease_permission"],"location_hint": string,"neighborhood": string,"owner_id": string,"published_at"?: string | null,"rent": number,"room_type": Database["public"]['Enums']["room_type"],"roommates"?: number,"search_text"?: never,"security_deposit"?: number | null,"status"?: Database["public"]['Enums']["listing_status"],"title": string,"updated_at"?: string,"utilities_estimate"?: number | null,"utilities_included"?: boolean
                   }
                   Update: {
-                    "available_from"?: string,"available_until"?: string,"bathrooms"?: number,"bedrooms"?: number,"city"?: string,"created_at"?: string,"dates_flexible"?: boolean,"description"?: string,"furnished"?: boolean,"id"?: string,"latitude"?: number | null,"laundry_available"?: boolean,"longitude"?: number | null,"monthly_rent"?: number,"neighborhood"?: string,"owner_id"?: string,"parking_available"?: boolean,"postal_code"?: string | null,"region"?: string,"room_type"?: Database["public"]['Enums']["room_type"],"search_tsv"?: never,"security_deposit"?: number | null,"status"?: Database["public"]['Enums']["listing_status"],"street_address"?: string,"sublease_permission_status"?: Database["public"]['Enums']["sublease_permission"],"title"?: string,"total_roommates"?: number | null,"updated_at"?: string,"utilities_cost"?: number | null,"utilities_included"?: boolean,"wifi_included"?: boolean
+                    "amenities"?: (string)[],"available_from"?: string,"available_to"?: string,"bathrooms"?: number,"bedrooms"?: number,"created_at"?: string,"description"?: string,"flexible_dates"?: boolean,"furnished"?: boolean,"house_rules"?: string | null,"housing_type"?: Database["public"]['Enums']["housing_type"],"id"?: string,"lease_permission"?: Database["public"]['Enums']["lease_permission"],"location_hint"?: string,"neighborhood"?: string,"owner_id"?: string,"published_at"?: string | null,"rent"?: number,"room_type"?: Database["public"]['Enums']["room_type"],"roommates"?: number,"search_text"?: never,"security_deposit"?: number | null,"status"?: Database["public"]['Enums']["listing_status"],"title"?: string,"updated_at"?: string,"utilities_estimate"?: number | null,"utilities_included"?: boolean
                   }
                   Relationships: [
                     {
@@ -149,28 +137,28 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "avatar_path": string | null,"bio": string | null,"created_at": string,"display_name": string,"graduation_year": number | null,"id": string,"updated_at": string
+                    "avatar_url": string | null,"bio": string | null,"created_at": string,"display_name": string,"email": string,"email_verified": boolean,"grad_year": number | null,"id": string,"role": Database["public"]['Enums']["user_role"],"status": Database["public"]['Enums']["account_status"],"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "avatar_path"?: string | null,"bio"?: string | null,"created_at"?: string,"display_name": string,"graduation_year"?: number | null,"id": string,"updated_at"?: string
+                    "avatar_url"?: string | null,"bio"?: string | null,"created_at"?: string,"display_name": string,"email": string,"email_verified"?: boolean,"grad_year"?: number | null,"id": string,"role"?: Database["public"]['Enums']["user_role"],"status"?: Database["public"]['Enums']["account_status"],"updated_at"?: string
                   }
                   Update: {
-                    "avatar_path"?: string | null,"bio"?: string | null,"created_at"?: string,"display_name"?: string,"graduation_year"?: number | null,"id"?: string,"updated_at"?: string
+                    "avatar_url"?: string | null,"bio"?: string | null,"created_at"?: string,"display_name"?: string,"email"?: string,"email_verified"?: boolean,"grad_year"?: number | null,"id"?: string,"role"?: Database["public"]['Enums']["user_role"],"status"?: Database["public"]['Enums']["account_status"],"updated_at"?: string
                   }
                   Relationships: [
                     
                   ]
                 },"reports": {
                   Row: {
-                    "created_at": string,"description": string | null,"id": string,"listing_id": string,"reason": Database["public"]['Enums']["report_reason"],"reporter_id": string,"reviewed_at": string | null,"status": Database["public"]['Enums']["report_status"]
+                    "created_at": string,"details": string | null,"id": string,"listing_id": string,"reason": Database["public"]['Enums']["report_reason"],"reporter_id": string,"resolved_at": string | null,"resolved_by": string | null,"status": Database["public"]['Enums']["report_status"]
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"description"?: string | null,"id"?: string,"listing_id": string,"reason": Database["public"]['Enums']["report_reason"],"reporter_id": string,"reviewed_at"?: string | null,"status"?: Database["public"]['Enums']["report_status"]
+                    "created_at"?: string,"details"?: string | null,"id"?: string,"listing_id": string,"reason": Database["public"]['Enums']["report_reason"],"reporter_id": string,"resolved_at"?: string | null,"resolved_by"?: string | null,"status"?: Database["public"]['Enums']["report_status"]
                   }
                   Update: {
-                    "created_at"?: string,"description"?: string | null,"id"?: string,"listing_id"?: string,"reason"?: Database["public"]['Enums']["report_reason"],"reporter_id"?: string,"reviewed_at"?: string | null,"status"?: Database["public"]['Enums']["report_status"]
+                    "created_at"?: string,"details"?: string | null,"id"?: string,"listing_id"?: string,"reason"?: Database["public"]['Enums']["report_reason"],"reporter_id"?: string,"resolved_at"?: string | null,"resolved_by"?: string | null,"status"?: Database["public"]['Enums']["report_status"]
                   }
                   Relationships: [
                     {
@@ -182,6 +170,12 @@ isOneToOne: false
     },{
       foreignKeyName: "reports_reporter_id_fkey"
       columns: ["reporter_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "reports_resolved_by_fkey"
+      columns: ["resolved_by"]
 isOneToOne: false
       referencedRelation: "profiles"
       referencedColumns: ["id"]
@@ -213,7 +207,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "contact_method": "email"|"text"|"either","listing_status": "draft"|"published"|"closed"|"hidden","report_reason": "misleading"|"scam"|"inappropriate"|"other","report_status": "pending"|"reviewed"|"resolved","room_type": "private_room"|"shared_room"|"entire_apartment","sublease_permission": "unconfirmed"|"confirmed"
+            "account_status": "active"|"suspended","housing_type": "apartment"|"house"|"townhouse"|"condo"|"other","inquiry_status": "sent"|"read"|"archived","lease_permission": "allowed"|"landlord_approved"|"pending","listing_status": "draft"|"published"|"unavailable"|"closed"|"hidden","report_reason": "scam"|"misleading"|"not_available"|"no_sublease_permission"|"inappropriate"|"other","report_status": "open"|"resolved"|"dismissed","room_type": "private"|"shared"|"entire","user_role": "student"|"admin"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -333,7 +327,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "contact_method": ["email", "text", "either"],"listing_status": ["draft", "published", "closed", "hidden"],"report_reason": ["misleading", "scam", "inappropriate", "other"],"report_status": ["pending", "reviewed", "resolved"],"room_type": ["private_room", "shared_room", "entire_apartment"],"sublease_permission": ["unconfirmed", "confirmed"]
+            "account_status": ["active", "suspended"],"housing_type": ["apartment", "house", "townhouse", "condo", "other"],"inquiry_status": ["sent", "read", "archived"],"lease_permission": ["allowed", "landlord_approved", "pending"],"listing_status": ["draft", "published", "unavailable", "closed", "hidden"],"report_reason": ["scam", "misleading", "not_available", "no_sublease_permission", "inappropriate", "other"],"report_status": ["open", "resolved", "dismissed"],"room_type": ["private", "shared", "entire"],"user_role": ["student", "admin"]
           }
         }
 } as const
